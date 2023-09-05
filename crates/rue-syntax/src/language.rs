@@ -1,13 +1,13 @@
 use num_traits::{FromPrimitive, ToPrimitive};
 
-use crate::syntax_kind::SyntaxKind;
+use crate::SyntaxKind;
 
-pub type SyntaxNode = rowan::SyntaxNode<Rue>;
+pub type SyntaxNode = rowan::SyntaxNode<RueLang>;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Rue {}
+pub enum RueLang {}
 
-impl rowan::Language for Rue {
+impl rowan::Language for RueLang {
     type Kind = SyntaxKind;
 
     fn kind_from_raw(raw: rowan::SyntaxKind) -> Self::Kind {

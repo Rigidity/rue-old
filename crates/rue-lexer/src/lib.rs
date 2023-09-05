@@ -1,10 +1,10 @@
 use std::str::Chars;
 
-pub use token::*;
-pub use token_kind::*;
-
 mod token;
 mod token_kind;
+
+pub use token::*;
+pub use token_kind::*;
 
 const EOF: char = '\0';
 

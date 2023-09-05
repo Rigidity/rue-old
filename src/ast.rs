@@ -1,9 +1,5 @@
 use rowan::ast::AstNode;
-
-use crate::{
-    lang::{Rue, SyntaxNode},
-    syntax_kind::SyntaxKind,
-};
+use rue_syntax::{RueLang, SyntaxKind, SyntaxNode};
 
 macro_rules! ast_node {
     ($name:ident, $kind:path) => {
@@ -13,7 +9,7 @@ macro_rules! ast_node {
         }
 
         impl AstNode for $name {
-            type Language = Rue;
+            type Language = RueLang;
 
             fn cast(node: SyntaxNode) -> Option<Self> {
                 Self::can_cast(node.kind()).then(|| Self { node })
@@ -38,7 +34,7 @@ macro_rules! ast_enum {
         }
 
         impl AstNode for $name {
-            type Language = Rue;
+            type Language = RueLang;
 
             fn cast(node: SyntaxNode) -> Option<Self> {
                 $( if let Some(value) = $node::cast(node) {

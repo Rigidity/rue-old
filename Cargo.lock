@@ -494,6 +494,7 @@ dependencies = [
  "num-traits",
  "rowan",
  "rue-lexer",
+ "rue-syntax",
 ]
 
 [[package]]

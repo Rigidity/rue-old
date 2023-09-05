@@ -1,7 +1,8 @@
 use rowan::{GreenNodeBuilder, Language};
 use rue_lexer::Token;
+use rue_syntax::{RueLang, SyntaxKind};
 
-use crate::{error::Error, lang::Rue, output::Output, syntax_kind::SyntaxKind};
+use crate::{error::Error, output::Output};
 
 pub struct Parser<'a> {
     tokens: Vec<(SyntaxKind, &'a str)>,
@@ -66,7 +67,7 @@ impl<'a> Parser<'a> {
     }
 
     fn do_bump(&mut self, token: (SyntaxKind, &'a str)) {
-        self.builder.token(Rue::kind_to_raw(token.0), token.1);
+        self.builder.token(RueLang::kind_to_raw(token.0), token.1);
         self.pos += 1;
         self.text_pos += token.1.len();
     }
@@ -84,7 +85,7 @@ impl<'a> Parser<'a> {
     }
 
     fn start(&mut self, kind: SyntaxKind) {
-        self.builder.start_node(Rue::kind_to_raw(kind));
+        self.builder.start_node(RueLang::kind_to_raw(kind));
     }
 
     fn finish(&mut self) {
@@ -179,8 +180,8 @@ impl<'a> Parser<'a> {
 }
 
 fn convert_token<'a>(token: &'a Token, _errors: &mut Vec<Error>) -> (SyntaxKind, &'a str) {
-    use crate::syntax_kind::SyntaxKind as S;
     use rue_lexer::TokenKind as T;
+    use rue_syntax::SyntaxKind as S;
 
     let kind = match token.kind {
         T::Unknown => S::Unknown,
