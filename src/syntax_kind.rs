@@ -10,15 +10,23 @@ pub enum SyntaxKind {
     Eof,
     Unknown,
     Error,
+
     Whitespace,
     Ident,
+
     Fn,
+
     OpenParen,
     CloseParen,
     OpenBrace,
     CloseBrace,
 
+    Comma,
+
     FunctionDef,
+    FunctionParamList,
+    FunctionParam,
+    Program,
 }
 
 impl SyntaxKind {
@@ -43,7 +51,11 @@ impl fmt::Display for SyntaxKind {
             Self::CloseParen => write!(f, "`)`"),
             Self::OpenBrace => write!(f, "`{{`"),
             Self::CloseBrace => write!(f, "`}}`"),
+            Self::Comma => write!(f, "`,`"),
             Self::FunctionDef => write!(f, "function"),
+            Self::FunctionParamList => write!(f, "parameter list"),
+            Self::FunctionParam => write!(f, "parameter"),
+            Self::Program => write!(f, "program"),
         }
     }
 }

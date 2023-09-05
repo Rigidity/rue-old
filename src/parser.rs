@@ -7,6 +7,7 @@ pub struct Parser<'a> {
     errors: Vec<Error>,
     builder: GreenNodeBuilder<'static>,
     pos: usize,
+    text_pos: usize,
 }
 
 impl<'a> Parser<'a> {
@@ -22,11 +23,12 @@ impl<'a> Parser<'a> {
             errors,
             builder: GreenNodeBuilder::new(),
             pos: 0,
+            text_pos: 0,
         }
     }
 
     pub fn parse(mut self) -> Output {
-        self.parse_fn();
+        self.parse_program();
         Output {
             green_node: self.builder.finish(),
             errors: self.errors,
@@ -41,16 +43,31 @@ impl<'a> Parser<'a> {
             .unwrap_or_default()
     }
 
+    fn peek_text_pos(&mut self) -> usize {
+        self.eat_trivia();
+        let len = self
+            .tokens
+            .get(self.pos)
+            .map(|token| token.1.len())
+            .unwrap_or_default();
+        self.text_pos + len
+    }
+
     fn bump(&mut self) -> bool {
         self.eat_trivia();
         match self.tokens.get(self.pos) {
-            Some((kind, text)) => {
-                self.builder.token(Rue::kind_to_raw(*kind), text);
-                self.pos += 1;
+            Some(token) => {
+                self.do_bump(*token);
                 true
             }
             None => false,
         }
+    }
+
+    fn do_bump(&mut self, token: (SyntaxKind, &'a str)) {
+        self.builder.token(Rue::kind_to_raw(token.0), token.1);
+        self.pos += 1;
+        self.text_pos += token.1.len();
     }
 
     fn eat(&mut self, kind: SyntaxKind) -> bool {
@@ -75,8 +92,9 @@ impl<'a> Parser<'a> {
     }
 
     fn error(&mut self, message: String) {
+        let end = self.peek_text_pos();
         self.errors.push(Error {
-            span: self.pos..(self.pos + 1),
+            span: self.text_pos..end,
             message,
         });
 
@@ -86,26 +104,59 @@ impl<'a> Parser<'a> {
     }
 
     fn eat_trivia(&mut self) {
-        while let Some((kind, text)) = self.tokens.get(self.pos) {
-            if kind.is_trivia() {
-                self.builder.token(Rue::kind_to_raw(*kind), text);
-                self.pos += 1;
+        while let Some(token) = self.tokens.get(self.pos) {
+            if token.0.is_trivia() {
+                self.do_bump(*token);
             } else {
                 break;
             }
         }
     }
 
+    fn parse_program(&mut self) {
+        self.start(SyntaxKind::Program);
+        while self.peek() != SyntaxKind::Eof {
+            self.parse_item();
+        }
+        self.finish();
+    }
+
+    fn parse_item(&mut self) {
+        match self.peek() {
+            SyntaxKind::Fn => self.parse_fn(),
+            kind => self.error(format!("expected item, found {}", kind)),
+        }
+    }
+
     fn parse_fn(&mut self) {
         self.start(SyntaxKind::FunctionDef);
-
         self.eat(SyntaxKind::Fn);
         self.eat(SyntaxKind::Ident);
-        self.eat(SyntaxKind::OpenParen);
-        self.eat(SyntaxKind::CloseParen);
+        self.parse_fn_param_list();
         self.eat(SyntaxKind::OpenBrace);
         self.eat(SyntaxKind::CloseBrace);
+        self.finish();
+    }
 
+    fn parse_fn_param_list(&mut self) {
+        self.start(SyntaxKind::FunctionParamList);
+        self.eat(SyntaxKind::OpenParen);
+
+        while !matches!(self.peek(), SyntaxKind::Eof | SyntaxKind::CloseParen) {
+            self.parse_fn_param();
+
+            if self.peek() == SyntaxKind::Comma {
+                self.bump();
+            }
+        }
+
+        self.eat(SyntaxKind::CloseParen);
+        self.finish();
+    }
+
+    fn parse_fn_param(&mut self) {
+        self.start(SyntaxKind::FunctionParam);
+        self.eat(SyntaxKind::Ident);
         self.finish();
     }
 }
@@ -116,13 +167,18 @@ fn convert_token<'a>(token: &'a Token, _errors: &mut Vec<Error>) -> (SyntaxKind,
 
     let kind = match token.kind {
         T::Unknown => S::Unknown,
+
         T::Whitespace => S::Whitespace,
         T::Ident => S::Ident,
+
         T::Fn => S::Fn,
+
         T::OpenParen => S::OpenParen,
         T::CloseParen => S::CloseParen,
         T::OpenBrace => S::OpenBrace,
         T::CloseBrace => S::CloseBrace,
+
+        T::Comma => S::Comma,
     };
 
     (kind, token.text)

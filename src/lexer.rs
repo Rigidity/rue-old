@@ -43,6 +43,7 @@ impl<'a> Lexer<'a> {
             ')' => TokenKind::CloseParen,
             '{' => TokenKind::OpenBrace,
             '}' => TokenKind::CloseBrace,
+            ',' => TokenKind::Comma,
             c if is_id_start(c) => self.ident(c),
             c if is_whitespace(c) => self.whitespace(),
             _ => TokenKind::Unknown,
