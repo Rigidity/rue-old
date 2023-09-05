@@ -1,15 +1,12 @@
 use ast::{FnDef, Item};
-use parser::Parser;
 use rowan::ast::AstNode;
 use rue_lexer::Lexer;
+use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
 
 use crate::ast::Program;
 
 mod ast;
-mod error;
-mod output;
-mod parser;
 
 fn main() {
     let source = include_str!("../main.rue");

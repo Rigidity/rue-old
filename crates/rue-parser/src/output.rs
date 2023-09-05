@@ -1,6 +1,6 @@
 use rowan::GreenNode;
 
-use crate::error::Error;
+use crate::Error;
 
 pub struct Output {
     pub green_node: GreenNode,
