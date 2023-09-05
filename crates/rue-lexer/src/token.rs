@@ -1,4 +1,4 @@
-use crate::token_kind::TokenKind;
+use crate::TokenKind;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Token<'a> {

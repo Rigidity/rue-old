@@ -493,6 +493,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "rowan",
+ "rue-lexer",
 ]
 
 [[package]]

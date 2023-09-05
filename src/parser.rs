@@ -1,6 +1,7 @@
 use rowan::{GreenNodeBuilder, Language};
+use rue_lexer::Token;
 
-use crate::{error::Error, lang::Rue, output::Output, syntax_kind::SyntaxKind, token::Token};
+use crate::{error::Error, lang::Rue, output::Output, syntax_kind::SyntaxKind};
 
 pub struct Parser<'a> {
     tokens: Vec<(SyntaxKind, &'a str)>,
@@ -179,7 +180,7 @@ impl<'a> Parser<'a> {
 
 fn convert_token<'a>(token: &'a Token, _errors: &mut Vec<Error>) -> (SyntaxKind, &'a str) {
     use crate::syntax_kind::SyntaxKind as S;
-    use crate::token_kind::TokenKind as T;
+    use rue_lexer::TokenKind as T;
 
     let kind = match token.kind {
         T::Unknown => S::Unknown,

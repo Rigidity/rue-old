@@ -1,19 +1,16 @@
 use ast::{FnDef, Item};
-use lexer::Lexer;
 use parser::Parser;
 use rowan::ast::AstNode;
+use rue_lexer::Lexer;
 
 use crate::{ast::Program, lang::SyntaxNode};
 
 mod ast;
 mod error;
 mod lang;
-mod lexer;
 mod output;
 mod parser;
 mod syntax_kind;
-mod token;
-mod token_kind;
 
 fn main() {
     let source = include_str!("../main.rue");
