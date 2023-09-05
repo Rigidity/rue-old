@@ -1,8 +1,10 @@
+use grammar::parse_program;
 use rowan::{GreenNodeBuilder, Language};
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind};
 
 mod error;
+mod grammar;
 mod output;
 
 pub use error::*;
@@ -34,7 +36,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(mut self) -> Output {
-        self.parse_program();
+        parse_program(&mut self);
         Output {
             green_node: self.builder.finish(),
             errors: self.errors,
@@ -116,69 +118,6 @@ impl<'a> Parser<'a> {
             } else {
                 break;
             }
-        }
-    }
-
-    fn parse_program(&mut self) {
-        self.start(SyntaxKind::Program);
-        while self.peek() != SyntaxKind::Eof {
-            self.parse_item();
-        }
-        self.finish();
-    }
-
-    fn parse_block(&mut self) {
-        self.start(SyntaxKind::Block);
-        self.eat(SyntaxKind::OpenBrace);
-        self.parse_expr();
-        self.eat(SyntaxKind::CloseBrace);
-        self.finish();
-    }
-
-    fn parse_item(&mut self) {
-        match self.peek() {
-            SyntaxKind::Fn => self.parse_fn_def(),
-            kind => self.error(format!("expected item, found {}", kind)),
-        }
-    }
-
-    fn parse_fn_def(&mut self) {
-        self.start(SyntaxKind::FnDef);
-        self.eat(SyntaxKind::Fn);
-        self.eat(SyntaxKind::Ident);
-        self.parse_fn_param_list();
-        self.parse_block();
-        self.finish();
-    }
-
-    fn parse_fn_param_list(&mut self) {
-        self.start(SyntaxKind::FnParamList);
-        self.eat(SyntaxKind::OpenParen);
-
-        while !matches!(self.peek(), SyntaxKind::Eof | SyntaxKind::CloseParen) {
-            self.parse_fn_param();
-
-            if self.peek() == SyntaxKind::Comma {
-                self.bump();
-            }
-        }
-
-        self.eat(SyntaxKind::CloseParen);
-        self.finish();
-    }
-
-    fn parse_fn_param(&mut self) {
-        self.start(SyntaxKind::FnParam);
-        self.eat(SyntaxKind::Ident);
-        self.finish();
-    }
-
-    fn parse_expr(&mut self) {
-        match self.peek() {
-            SyntaxKind::Integer => {
-                self.bump();
-            }
-            kind => self.error(format!("expected expression, found {}", kind)),
         }
     }
 }
