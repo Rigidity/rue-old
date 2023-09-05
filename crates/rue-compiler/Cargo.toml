@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 clvmr = "0.3.0"
+rue-parser = { version = "0.1.0", path = "../rue-parser" }

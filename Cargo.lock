@@ -493,6 +493,7 @@ dependencies = [
  "num-derive",
  "num-traits",
  "rowan",
+ "rue-compiler",
  "rue-lexer",
  "rue-parser",
  "rue-syntax",
@@ -503,6 +504,7 @@ name = "rue-compiler"
 version = "0.1.0"
 dependencies = [
  "clvmr",
+ "rue-parser",
 ]
 
 [[package]]
