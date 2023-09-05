@@ -328,16 +328,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "new-rust"
-version = "0.1.0"
-dependencies = [
- "clvmr",
- "num-derive",
- "num-traits",
- "rowan",
-]
-
-[[package]]
 name = "num-bigint"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -493,6 +483,43 @@ dependencies = [
  "memoffset",
  "rustc-hash",
  "text-size",
+]
+
+[[package]]
+name = "rue"
+version = "0.1.0"
+dependencies = [
+ "clvmr",
+ "num-derive",
+ "num-traits",
+ "rowan",
+]
+
+[[package]]
+name = "rue-compiler"
+version = "0.1.0"
+dependencies = [
+ "clvmr",
+]
+
+[[package]]
+name = "rue-lexer"
+version = "0.1.0"
+
+[[package]]
+name = "rue-parser"
+version = "0.1.0"
+dependencies = [
+ "rowan",
+]
+
+[[package]]
+name = "rue-syntax"
+version = "0.1.0"
+dependencies = [
+ "num-derive",
+ "num-traits",
+ "rowan",
 ]
 
 [[package]]
