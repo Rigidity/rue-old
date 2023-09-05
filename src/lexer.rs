@@ -44,6 +44,7 @@ impl<'a> Lexer<'a> {
             '{' => TokenKind::OpenBrace,
             '}' => TokenKind::CloseBrace,
             ',' => TokenKind::Comma,
+            c if is_digit(c) => self.integer(),
             c if is_id_start(c) => self.ident(c),
             c if is_whitespace(c) => self.whitespace(),
             _ => TokenKind::Unknown,
@@ -53,6 +54,13 @@ impl<'a> Lexer<'a> {
             kind,
             text: &self.source[start..self.pos],
         })
+    }
+
+    fn integer(&mut self) -> TokenKind {
+        while is_digit(self.peek()) {
+            self.bump();
+        }
+        TokenKind::Integer
     }
 
     fn ident(&mut self, c: char) -> TokenKind {
@@ -89,9 +97,13 @@ fn is_id_start(c: char) -> bool {
 }
 
 fn is_id_continue(c: char) -> bool {
-    is_id_start(c) || matches!(c, '0'..='9')
+    is_id_start(c) || is_digit(c)
 }
 
 fn is_whitespace(c: char) -> bool {
     matches!(c, ' ' | '\t' | '\r' | '\n')
+}
+
+fn is_digit(c: char) -> bool {
+    matches!(c, '0'..='9')
 }

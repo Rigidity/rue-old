@@ -121,25 +121,32 @@ impl<'a> Parser<'a> {
         self.finish();
     }
 
-    fn parse_item(&mut self) {
-        match self.peek() {
-            SyntaxKind::Fn => self.parse_fn(),
-            kind => self.error(format!("expected item, found {}", kind)),
-        }
-    }
-
-    fn parse_fn(&mut self) {
-        self.start(SyntaxKind::FunctionDef);
-        self.eat(SyntaxKind::Fn);
-        self.eat(SyntaxKind::Ident);
-        self.parse_fn_param_list();
+    fn parse_block(&mut self) {
+        self.start(SyntaxKind::Block);
         self.eat(SyntaxKind::OpenBrace);
+        self.parse_expr();
         self.eat(SyntaxKind::CloseBrace);
         self.finish();
     }
 
+    fn parse_item(&mut self) {
+        match self.peek() {
+            SyntaxKind::Fn => self.parse_fn_def(),
+            kind => self.error(format!("expected item, found {}", kind)),
+        }
+    }
+
+    fn parse_fn_def(&mut self) {
+        self.start(SyntaxKind::FnDef);
+        self.eat(SyntaxKind::Fn);
+        self.eat(SyntaxKind::Ident);
+        self.parse_fn_param_list();
+        self.parse_block();
+        self.finish();
+    }
+
     fn parse_fn_param_list(&mut self) {
-        self.start(SyntaxKind::FunctionParamList);
+        self.start(SyntaxKind::FnParamList);
         self.eat(SyntaxKind::OpenParen);
 
         while !matches!(self.peek(), SyntaxKind::Eof | SyntaxKind::CloseParen) {
@@ -155,9 +162,18 @@ impl<'a> Parser<'a> {
     }
 
     fn parse_fn_param(&mut self) {
-        self.start(SyntaxKind::FunctionParam);
+        self.start(SyntaxKind::FnParam);
         self.eat(SyntaxKind::Ident);
         self.finish();
+    }
+
+    fn parse_expr(&mut self) {
+        match self.peek() {
+            SyntaxKind::Integer => {
+                self.bump();
+            }
+            kind => self.error(format!("expected expression, found {}", kind)),
+        }
     }
 }
 
@@ -167,9 +183,10 @@ fn convert_token<'a>(token: &'a Token, _errors: &mut Vec<Error>) -> (SyntaxKind,
 
     let kind = match token.kind {
         T::Unknown => S::Unknown,
-
         T::Whitespace => S::Whitespace,
+
         T::Ident => S::Ident,
+        T::Integer => S::Integer,
 
         T::Fn => S::Fn,
 

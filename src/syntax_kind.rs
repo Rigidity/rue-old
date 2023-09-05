@@ -10,9 +10,10 @@ pub enum SyntaxKind {
     Eof,
     Unknown,
     Error,
-
     Whitespace,
+
     Ident,
+    Integer,
 
     Fn,
 
@@ -23,9 +24,10 @@ pub enum SyntaxKind {
 
     Comma,
 
-    FunctionDef,
-    FunctionParamList,
-    FunctionParam,
+    FnDef,
+    FnParamList,
+    FnParam,
+    Block,
     Program,
 }
 
@@ -46,15 +48,17 @@ impl fmt::Display for SyntaxKind {
             Self::Error => write!(f, "error"),
             Self::Whitespace => write!(f, "whitespace"),
             Self::Ident => write!(f, "identifier"),
+            Self::Integer => write!(f, "integer"),
             Self::Fn => write!(f, "`fn`"),
             Self::OpenParen => write!(f, "`(`"),
             Self::CloseParen => write!(f, "`)`"),
             Self::OpenBrace => write!(f, "`{{`"),
             Self::CloseBrace => write!(f, "`}}`"),
             Self::Comma => write!(f, "`,`"),
-            Self::FunctionDef => write!(f, "function"),
-            Self::FunctionParamList => write!(f, "parameter list"),
-            Self::FunctionParam => write!(f, "parameter"),
+            Self::FnDef => write!(f, "function"),
+            Self::FnParamList => write!(f, "parameter list"),
+            Self::FnParam => write!(f, "parameter"),
+            Self::Block => write!(f, "block"),
             Self::Program => write!(f, "program"),
         }
     }
