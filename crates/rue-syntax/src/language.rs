@@ -3,6 +3,8 @@ use num_traits::{FromPrimitive, ToPrimitive};
 use crate::SyntaxKind;
 
 pub type SyntaxNode = rowan::SyntaxNode<RueLang>;
+pub type SyntaxToken = rowan::SyntaxToken<RueLang>;
+pub type SyntaxElement = rowan::SyntaxElement<RueLang>;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RueLang {}

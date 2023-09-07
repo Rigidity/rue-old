@@ -1,5 +1,5 @@
 use rue_lexer::Lexer;
-use rue_parser::Parser;
+use rue_parser::{Parser, Program};
 use rue_syntax::SyntaxNode;
 
 fn main() {
@@ -13,4 +13,8 @@ fn main() {
     let tree = &tree[0..(tree.len() - 1)];
     println!("{:?}", output.errors);
     println!("{}", tree);
+
+    let program = Program::cast(node);
+
+    println!("{:?}", program.unwrap().expr().unwrap());
 }
