@@ -13,12 +13,13 @@ fn main() {
     let node = SyntaxNode::new_root(output.green_node.clone());
     let tree = format!("{:#?}", node);
     let tree = &tree[0..(tree.len() - 1)];
-    println!("{:?}", output.errors);
-    println!("{}", tree);
+    println!("Parse errors: {:?}\n", output.errors);
+    println!("Parse tree: {}\n", tree);
 
     let program = Program::cast(node);
     let compiler = Compiler::new();
     let output = compiler.compile(program.unwrap());
 
-    println!("{}", hex::encode(output));
+    println!("Compile errors: {:?}\n", output.1);
+    println!("{}", hex::encode(output.0));
 }

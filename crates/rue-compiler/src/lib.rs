@@ -7,6 +7,9 @@ use num_bigint::BigInt;
 use rue_ast::{Expr, FnDef, Item, Program};
 
 mod codegen;
+mod error;
+
+pub use error::*;
 
 pub struct Environment {
     bindings: IndexMap<String, u32>,
@@ -50,18 +53,21 @@ impl Environment {
 
 pub struct Compiler {
     allocator: Allocator,
+    errors: Vec<Error>,
 }
 
 impl Compiler {
     pub fn new() -> Self {
         Self {
             allocator: Allocator::new(),
+            errors: Vec::new(),
         }
     }
 
-    pub fn compile(mut self, program: Program) -> Vec<u8> {
+    pub fn compile(mut self, program: Program) -> (Vec<u8>, Vec<Error>) {
         let ptr = self.compile_program(program);
-        node_to_bytes(&self.allocator, ptr).unwrap()
+        let output = node_to_bytes(&self.allocator, ptr).unwrap();
+        (output, self.errors)
     }
 
     fn compile_program(&mut self, program: Program) -> NodePtr {
@@ -112,7 +118,7 @@ impl Compiler {
         self.allocator.null()
     }
 
-    fn compile_expr(&mut self, _ctx: &Environment, expr: Expr) -> NodePtr {
+    fn compile_expr(&mut self, ctx: &Environment, expr: Expr) -> NodePtr {
         match expr {
             Expr::Integer(token) => {
                 let atom = self
@@ -128,6 +134,16 @@ impl Compiler {
                 let atom = self.allocator.new_atom(text.as_bytes()).unwrap();
                 quote(&mut self.allocator, atom).unwrap()
             }
+            Expr::BindingRef(token) => match ctx.lookup(token.text()) {
+                Some(path) => self.allocator.new_number(path.into()).unwrap(),
+                None => {
+                    self.errors.push(Error {
+                        span: token.text_range().into(),
+                        message: format!("undefined identifier `{}`", token.text()),
+                    });
+                    self.allocator.null()
+                }
+            },
         }
     }
 }
