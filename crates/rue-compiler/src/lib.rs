@@ -1,6 +1,12 @@
+use std::str::FromStr;
+
 use clvmr::{allocator::NodePtr, serde::node_to_bytes, Allocator};
+use codegen::quote;
 use indexmap::IndexMap;
+use num_bigint::BigInt;
 use rue_ast::{Expr, FnDef, Item, Program};
+
+mod codegen;
 
 pub struct Environment {
     bindings: IndexMap<String, u32>,
@@ -69,16 +75,13 @@ impl Compiler {
             ctx.bind_item(item);
         }
 
-        // (a (q . expr_compiled_with_env) args)
-
         let compiled_expr = self.compile_expr(&ctx, expr);
 
         let op_a = self.allocator.new_number(2.into()).unwrap();
         let op_c = self.allocator.new_number(4.into()).unwrap();
-        let op_q = self.allocator.one();
         let nil = self.allocator.null();
 
-        let quoted_expr = self.allocator.new_pair(op_q, compiled_expr).unwrap();
+        let quoted_expr = quote(&mut self.allocator, compiled_expr).unwrap();
 
         let mut args = nil;
         for item in program.items().into_iter().rev() {
@@ -97,11 +100,26 @@ impl Compiler {
         op
     }
 
-    fn compile_item(&mut self, item: Item) -> NodePtr {
+    fn compile_item(&mut self, _item: Item) -> NodePtr {
         self.allocator.null()
     }
 
-    fn compile_expr(&mut self, ctx: &Environment, expr: Expr) -> NodePtr {
-        self.allocator.null()
+    fn compile_expr(&mut self, _ctx: &Environment, expr: Expr) -> NodePtr {
+        match expr {
+            Expr::Integer(token) => {
+                let atom = self
+                    .allocator
+                    .new_number(BigInt::from_str(token.text()).unwrap())
+                    .unwrap();
+                quote(&mut self.allocator, atom).unwrap()
+            }
+            Expr::String(token) => {
+                let text = token.text();
+                let text = text.strip_prefix('"').unwrap_or(text);
+                let text = text.strip_suffix('"').unwrap_or(text);
+                let atom = self.allocator.new_atom(text.as_bytes()).unwrap();
+                quote(&mut self.allocator, atom).unwrap()
+            }
+        }
     }
 }

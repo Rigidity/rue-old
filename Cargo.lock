@@ -536,6 +536,7 @@ version = "0.1.0"
 dependencies = [
  "clvmr",
  "indexmap",
+ "num-bigint",
  "rue-ast",
 ]
 
