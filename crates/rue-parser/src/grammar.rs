@@ -4,10 +4,18 @@ use crate::Parser;
 
 pub(super) fn parse_program(p: &mut Parser) {
     p.start(SyntaxKind::Program);
+
     while is_item(p) {
         parse_item(p);
     }
+
     parse_expr(p);
+
+    let kind = p.peek();
+    if kind != SyntaxKind::Eof {
+        p.error(format!("expected eof, found {}", kind));
+    }
+
     p.finish();
 }
 
@@ -68,12 +76,58 @@ fn parse_fn_param(p: &mut Parser) {
     p.finish();
 }
 
+enum Op {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+impl Op {
+    fn binding_power(&self) -> (u8, u8) {
+        match self {
+            Self::Add | Self::Sub => (1, 2),
+            Self::Mul | Self::Div => (3, 4),
+        }
+    }
+}
+
 fn parse_expr(p: &mut Parser) {
+    parse_expr_binding_power(p, 0);
+}
+
+fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
+    let checkpoint = p.checkpoint();
+
     match p.peek() {
         SyntaxKind::Integer | SyntaxKind::String | SyntaxKind::Ident => {
             p.bump();
         }
-        kind => p.error(format!("expected expression, found {}", kind)),
+        kind => {
+            p.error(format!("expected expression, found {}", kind));
+        }
+    }
+
+    loop {
+        let op = match p.peek() {
+            SyntaxKind::Plus => Op::Add,
+            SyntaxKind::Minus => Op::Sub,
+            SyntaxKind::Star => Op::Mul,
+            SyntaxKind::Slash => Op::Div,
+            _ => return,
+        };
+
+        let (left_binding_power, right_binding_power) = op.binding_power();
+
+        if left_binding_power < min_binding_power {
+            return;
+        }
+
+        p.bump();
+
+        p.start_at(checkpoint, SyntaxKind::BinaryExpr);
+        parse_expr_binding_power(p, right_binding_power);
+        p.finish();
     }
 }
 

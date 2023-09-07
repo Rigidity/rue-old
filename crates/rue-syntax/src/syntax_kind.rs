@@ -35,6 +35,7 @@ pub enum SyntaxKind {
     Colon,
     Arrow,
 
+    BinaryExpr,
     FnDef,
     FnParamList,
     FnParam,
@@ -82,6 +83,7 @@ impl fmt::Display for SyntaxKind {
             Self::Colon => write!(f, "`:`"),
             Self::Arrow => write!(f, "`->`"),
 
+            Self::BinaryExpr => write!(f, "binary expression"),
             Self::FnDef => write!(f, "function"),
             Self::FnParamList => write!(f, "parameter list"),
             Self::FnParam => write!(f, "parameter"),

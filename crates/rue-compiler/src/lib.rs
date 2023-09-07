@@ -4,12 +4,13 @@ use clvmr::{allocator::NodePtr, serde::node_to_bytes, Allocator};
 use codegen::quote;
 use indexmap::IndexMap;
 use num_bigint::BigInt;
-use rue_ast::{Expr, FnDef, Item, Program};
+use rue_ast::{BinaryOp, Expr, FnDef, Item, Program};
 
 mod codegen;
 mod error;
 
 pub use error::*;
+use rue_syntax::SyntaxKind;
 
 pub struct Environment {
     bindings: IndexMap<String, u32>,
@@ -144,6 +145,37 @@ impl Compiler {
                     self.allocator.null()
                 }
             },
+            Expr::Binary(binary) => {
+                let Some(op) = binary.op() else {
+                    return self.allocator.null();
+                };
+
+                let lhs = binary
+                    .lhs()
+                    .map(|expr| self.compile_expr(ctx, expr))
+                    .unwrap_or(self.allocator.null());
+
+                let rhs = binary
+                    .rhs()
+                    .map(|expr| self.compile_expr(ctx, expr))
+                    .unwrap_or(self.allocator.null());
+
+                let op = match op {
+                    BinaryOp::Plus(_) => 16,
+                    BinaryOp::Minus(_) => 17,
+                    BinaryOp::Star(_) => 18,
+                    BinaryOp::Slash(_) => 19,
+                };
+
+                let op_ptr = self.allocator.new_number(op.into()).unwrap();
+
+                [op_ptr, lhs, rhs]
+                    .into_iter()
+                    .rev()
+                    .fold(self.allocator.null(), |value, item| {
+                        self.allocator.new_pair(item, value).unwrap()
+                    })
+            }
         }
     }
 }

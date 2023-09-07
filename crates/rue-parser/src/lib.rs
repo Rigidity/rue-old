@@ -1,5 +1,5 @@
 use grammar::parse_program;
-use rowan::{GreenNodeBuilder, Language};
+use rowan::{Checkpoint, GreenNodeBuilder, Language};
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind};
 
@@ -125,8 +125,17 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn checkpoint(&mut self) -> Checkpoint {
+        self.builder.checkpoint()
+    }
+
     fn start(&mut self, kind: SyntaxKind) {
         self.builder.start_node(RueLang::kind_to_raw(kind));
+    }
+
+    fn start_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
+        self.builder
+            .start_node_at(checkpoint, RueLang::kind_to_raw(kind));
     }
 
     fn finish(&mut self) {
