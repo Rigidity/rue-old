@@ -493,9 +493,17 @@ dependencies = [
  "num-derive",
  "num-traits",
  "rowan",
+ "rue-ast",
  "rue-compiler",
  "rue-lexer",
  "rue-parser",
+ "rue-syntax",
+]
+
+[[package]]
+name = "rue-ast"
+version = "0.1.0"
+dependencies = [
  "rue-syntax",
 ]
 

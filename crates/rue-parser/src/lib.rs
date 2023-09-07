@@ -3,12 +3,10 @@ use rowan::{GreenNodeBuilder, Language};
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind};
 
-mod ast;
 mod error;
 mod grammar;
 mod output;
 
-pub use ast::*;
 pub use error::*;
 pub use output::*;
 

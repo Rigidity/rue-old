@@ -1,5 +1,6 @@
+use rue_ast::Program;
 use rue_lexer::Lexer;
-use rue_parser::{Parser, Program};
+use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
 
 fn main() {

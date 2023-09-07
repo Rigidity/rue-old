@@ -1,9 +1,7 @@
 [package]
-name = "rue-parser"
+name = "rue-ast"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rowan = "0.15.11"
-rue-lexer = { version = "0.1.0", path = "../rue-lexer" }
 rue-syntax = { version = "0.1.0", path = "../rue-syntax" }
