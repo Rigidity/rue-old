@@ -69,13 +69,19 @@ impl Compiler {
             return self.allocator.null();
         };
 
+        let items = program.items();
+
         let mut ctx = Environment::new();
 
-        for item in program.items() {
-            ctx.bind_item(item);
+        for item in items.iter() {
+            ctx.bind_item(item.clone());
         }
 
         let compiled_expr = self.compile_expr(&ctx, expr);
+
+        if items.is_empty() {
+            return compiled_expr;
+        }
 
         let op_a = self.allocator.new_number(2.into()).unwrap();
         let op_c = self.allocator.new_number(4.into()).unwrap();
@@ -83,21 +89,23 @@ impl Compiler {
 
         let quoted_expr = quote(&mut self.allocator, compiled_expr).unwrap();
 
-        let mut args = nil;
-        for item in program.items().into_iter().rev() {
+        let args = items.into_iter().rev().fold(nil, |value, item| {
             let compiled_item = self.compile_item(item);
-            let tail = self.allocator.new_pair(compiled_item, args).unwrap();
-            args = self.allocator.new_pair(op_c, tail).unwrap();
-        }
 
-        let values = [op_a, quoted_expr, args];
+            [op_c, compiled_item, value]
+                .into_iter()
+                .rev()
+                .fold(nil, |value, item| {
+                    self.allocator.new_pair(item, value).unwrap()
+                })
+        });
 
-        let mut op = nil;
-        for item in values.into_iter().rev() {
-            op = self.allocator.new_pair(item, op).unwrap();
-        }
-
-        op
+        [op_a, quoted_expr, args]
+            .into_iter()
+            .rev()
+            .fold(nil, |value, item| {
+                self.allocator.new_pair(item, value).unwrap()
+            })
     }
 
     fn compile_item(&mut self, _item: Item) -> NodePtr {
