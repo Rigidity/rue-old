@@ -16,3 +16,4 @@ rue-syntax = { version = "0.1.0", path = "./crates/rue-syntax" }
 rue-parser = { version = "0.1.0", path = "./crates/rue-parser" }
 rue-ast = { version = "0.1.0", path = "./crates/rue-ast" }
 rue-compiler = { version = "0.1.0", path = "./crates/rue-compiler" }
+hex = "0.4.3"

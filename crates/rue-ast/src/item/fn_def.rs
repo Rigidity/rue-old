@@ -6,6 +6,8 @@ mod fn_param_list;
 pub use fn_param::*;
 pub use fn_param_list::*;
 
+use crate::Block;
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct FnDef(SyntaxNode);
 
@@ -23,5 +25,9 @@ impl FnDef {
 
     pub fn param_list(&self) -> Option<FnParamList> {
         self.0.children().find_map(FnParamList::cast)
+    }
+
+    pub fn block(&self) -> Option<Block> {
+        self.0.children().find_map(Block::cast)
     }
 }

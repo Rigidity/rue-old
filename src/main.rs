@@ -1,4 +1,5 @@
 use rue_ast::Program;
+use rue_compiler::Compiler;
 use rue_lexer::Lexer;
 use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
@@ -16,6 +17,8 @@ fn main() {
     println!("{}", tree);
 
     let program = Program::cast(node);
+    let compiler = Compiler::new();
+    let output = compiler.compile(program.unwrap());
 
-    println!("{:?}", program.unwrap().expr().unwrap());
+    println!("{}", hex::encode(output));
 }
