@@ -538,7 +538,6 @@ dependencies = [
  "indexmap",
  "num-bigint",
  "rue-ast",
- "rue-syntax",
 ]
 
 [[package]]

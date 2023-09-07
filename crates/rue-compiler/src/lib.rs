@@ -10,7 +10,6 @@ mod codegen;
 mod error;
 
 pub use error::*;
-use rue_syntax::SyntaxKind;
 
 pub struct Environment {
     bindings: IndexMap<String, u32>,
