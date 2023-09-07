@@ -4,18 +4,26 @@ use crate::Parser;
 
 pub(super) fn parse_program(p: &mut Parser) {
     p.start(SyntaxKind::Program);
-    while p.peek() != SyntaxKind::Eof {
+    while is_item(p) {
         parse_item(p);
     }
+    parse_expr(p);
     p.finish();
 }
 
 fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
     p.eat(SyntaxKind::OpenBrace);
+    while is_item(p) {
+        parse_item(p);
+    }
     parse_expr(p);
     p.eat(SyntaxKind::CloseBrace);
     p.finish();
+}
+
+fn is_item(p: &mut Parser) -> bool {
+    matches!(p.peek(), SyntaxKind::Fn)
 }
 
 fn parse_item(p: &mut Parser) {
@@ -30,6 +38,8 @@ fn parse_fn_def(p: &mut Parser) {
     p.eat(SyntaxKind::Fn);
     p.eat(SyntaxKind::Ident);
     parse_fn_param_list(p);
+    p.eat(SyntaxKind::Arrow);
+    parse_type(p);
     parse_block(p);
     p.finish();
 }
@@ -53,6 +63,8 @@ fn parse_fn_param_list(p: &mut Parser) {
 fn parse_fn_param(p: &mut Parser) {
     p.start(SyntaxKind::FnParam);
     p.eat(SyntaxKind::Ident);
+    p.eat(SyntaxKind::Colon);
+    parse_type(p);
     p.finish();
 }
 
@@ -62,5 +74,14 @@ fn parse_expr(p: &mut Parser) {
             p.bump();
         }
         kind => p.error(format!("expected expression, found {}", kind)),
+    }
+}
+
+fn parse_type(p: &mut Parser) {
+    match p.peek() {
+        SyntaxKind::Ident => {
+            p.bump();
+        }
+        kind => p.error(format!("expected type, found {}", kind)),
     }
 }

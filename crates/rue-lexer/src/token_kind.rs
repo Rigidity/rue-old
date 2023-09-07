@@ -13,5 +13,14 @@ pub enum TokenKind {
     OpenBrace,
     CloseBrace,
 
+    Plus,
+    Minus,
+    Star,
+    Slash,
+
+    GreaterThan,
+    LessThan,
+
     Comma,
+    Colon,
 }

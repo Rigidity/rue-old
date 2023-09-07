@@ -47,10 +47,7 @@ impl<'a> Parser<'a> {
 
     fn peek(&mut self) -> SyntaxKind {
         self.eat_trivia();
-        self.tokens
-            .get(self.pos)
-            .map(|token| token.0)
-            .unwrap_or_default()
+        self.peek_raw()
     }
 
     fn peek_text_pos(&mut self) -> usize {
@@ -61,6 +58,17 @@ impl<'a> Parser<'a> {
             .map(|token| token.1.len())
             .unwrap_or_default();
         self.text_pos + len
+    }
+
+    fn peek_raw(&self) -> SyntaxKind {
+        self.nth_raw(0)
+    }
+
+    fn nth_raw(&self, n: usize) -> SyntaxKind {
+        self.tokens
+            .get(self.pos + n)
+            .map(|token| token.0)
+            .unwrap_or_default()
     }
 
     fn bump(&mut self) -> bool {
@@ -81,14 +89,36 @@ impl<'a> Parser<'a> {
     }
 
     fn eat(&mut self, kind: SyntaxKind) -> bool {
-        let next = self.peek();
+        match kind {
+            SyntaxKind::Arrow => {
+                if (self.nth_raw(0), self.nth_raw(1))
+                    == (SyntaxKind::Minus, SyntaxKind::GreaterThan)
+                {
+                    let (a, b) = (self.tokens[self.pos], self.tokens[self.pos + 1]);
+                    let mut text = String::from(a.1);
+                    text.push_str(b.1);
+                    self.builder
+                        .token(RueLang::kind_to_raw(SyntaxKind::Arrow), &text);
+                    self.pos += 2;
+                    self.text_pos += text.len();
+                    true
+                } else {
+                    let next = self.peek();
+                    self.error(format!("expected {}, found {}", kind, next));
+                    false
+                }
+            }
+            _ => {
+                let next = self.peek();
 
-        if next == kind {
-            self.bump();
-            true
-        } else {
-            self.error(format!("expected {}, found {}", kind, next));
-            false
+                if next == kind {
+                    self.bump();
+                    true
+                } else {
+                    self.error(format!("expected {}, found {}", kind, next));
+                    false
+                }
+            }
         }
     }
 
@@ -137,12 +167,21 @@ fn convert_token<'a>(token: &'a Token, _errors: &mut Vec<Error>) -> (SyntaxKind,
 
         T::Fn => S::Fn,
 
+        T::Plus => S::Plus,
+        T::Minus => S::Minus,
+        T::Star => S::Star,
+        T::Slash => S::Slash,
+
+        T::GreaterThan => S::GreaterThan,
+        T::LessThan => S::LessThan,
+
         T::OpenParen => S::OpenParen,
         T::CloseParen => S::CloseParen,
         T::OpenBrace => S::OpenBrace,
         T::CloseBrace => S::CloseBrace,
 
         T::Comma => S::Comma,
+        T::Colon => S::Colon,
     };
 
     (kind, token.text)

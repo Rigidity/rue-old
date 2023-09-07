@@ -1,7 +1,5 @@
-use rowan::ast::AstNode;
-use rue_compiler::enter_program;
 use rue_lexer::Lexer;
-use rue_parser::{Parser, Program};
+use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
 
 fn main() {
@@ -15,7 +13,4 @@ fn main() {
     let tree = &tree[0..(tree.len() - 1)];
     println!("{:?}", output.errors);
     println!("{}", tree);
-
-    let ast = Program::cast(node).unwrap();
-    enter_program(ast);
 }

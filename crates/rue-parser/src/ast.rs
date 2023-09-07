@@ -62,6 +62,10 @@ impl Program {
     pub fn items(&self) -> Vec<Item> {
         self.node.children().filter_map(Item::cast).collect()
     }
+
+    pub fn expr(&self) -> Option<Expr> {
+        self.node.children_with_tokens().find_map()
+    }
 }
 
 ast_enum!(Item, FnDef);
@@ -75,3 +79,6 @@ impl FnDef {
             .and_then(|node| node.as_token().map(|node| node.text().to_string()))
     }
 }
+
+ast_enum!(Expr, Integer);
+ast_node!(Integer, SyntaxKind::Integer);

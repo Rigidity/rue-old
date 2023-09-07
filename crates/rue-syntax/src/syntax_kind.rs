@@ -22,7 +22,17 @@ pub enum SyntaxKind {
     OpenBrace,
     CloseBrace,
 
+    Plus,
+    Minus,
+    Star,
+    Slash,
+
+    GreaterThan,
+    LessThan,
+
     Comma,
+    Colon,
+    Arrow,
 
     FnDef,
     FnParamList,
@@ -47,14 +57,29 @@ impl fmt::Display for SyntaxKind {
             Self::Unknown => write!(f, "unknown"),
             Self::Error => write!(f, "error"),
             Self::Whitespace => write!(f, "whitespace"),
+
             Self::Ident => write!(f, "identifier"),
             Self::Integer => write!(f, "integer"),
+
             Self::Fn => write!(f, "`fn`"),
+
             Self::OpenParen => write!(f, "`(`"),
             Self::CloseParen => write!(f, "`)`"),
             Self::OpenBrace => write!(f, "`{{`"),
             Self::CloseBrace => write!(f, "`}}`"),
+
+            Self::Plus => write!(f, "`+`"),
+            Self::Minus => write!(f, "`-`"),
+            Self::Star => write!(f, "`*`"),
+            Self::Slash => write!(f, "`/`"),
+
+            Self::GreaterThan => write!(f, "`>`"),
+            Self::LessThan => write!(f, "`<`"),
+
             Self::Comma => write!(f, "`,`"),
+            Self::Colon => write!(f, "`:`"),
+            Self::Arrow => write!(f, "`->`"),
+
             Self::FnDef => write!(f, "function"),
             Self::FnParamList => write!(f, "parameter list"),
             Self::FnParam => write!(f, "parameter"),

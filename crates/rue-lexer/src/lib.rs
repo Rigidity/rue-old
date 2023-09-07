@@ -46,10 +46,22 @@ impl<'a> Lexer<'a> {
             ')' => TokenKind::CloseParen,
             '{' => TokenKind::OpenBrace,
             '}' => TokenKind::CloseBrace,
+
+            '+' => TokenKind::Plus,
+            '-' => TokenKind::Minus,
+            '*' => TokenKind::Star,
+            '/' => TokenKind::Slash,
+
+            '>' => TokenKind::GreaterThan,
+            '<' => TokenKind::LessThan,
+
             ',' => TokenKind::Comma,
+            ':' => TokenKind::Colon,
+
             c if is_digit(c) => self.integer(),
             c if is_id_start(c) => self.ident(c),
             c if is_whitespace(c) => self.whitespace(),
+
             _ => TokenKind::Unknown,
         };
 
