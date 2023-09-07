@@ -70,7 +70,7 @@ fn parse_fn_param(p: &mut Parser) {
 
 fn parse_expr(p: &mut Parser) {
     match p.peek() {
-        SyntaxKind::Integer => {
+        SyntaxKind::Integer | SyntaxKind::String => {
             p.bump();
         }
         kind => p.error(format!("expected expression, found {}", kind)),

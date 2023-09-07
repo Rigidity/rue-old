@@ -14,6 +14,7 @@ pub enum SyntaxKind {
 
     Ident,
     Integer,
+    String,
 
     Fn,
 
@@ -60,6 +61,7 @@ impl fmt::Display for SyntaxKind {
 
             Self::Ident => write!(f, "identifier"),
             Self::Integer => write!(f, "integer"),
+            Self::String => write!(f, "string"),
 
             Self::Fn => write!(f, "`fn`"),
 

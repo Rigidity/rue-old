@@ -5,6 +5,7 @@ pub enum TokenKind {
 
     Ident,
     Integer,
+    String { is_terminated: bool },
 
     Fn,
 

@@ -21,9 +21,14 @@ pub struct Parser<'a> {
 impl<'a> Parser<'a> {
     pub fn new(input: &'a [Token<'a>]) -> Self {
         let mut errors = Vec::new();
+        let mut pos = 0;
         let tokens = input
             .into_iter()
-            .map(|token| convert_token(token, &mut errors))
+            .map(|token| {
+                let result = convert_token(token, pos, &mut errors);
+                pos += token.text.len();
+                result
+            })
             .collect();
 
         Self {
@@ -152,16 +157,36 @@ impl<'a> Parser<'a> {
     }
 }
 
-fn convert_token<'a>(token: &'a Token, _errors: &mut Vec<Error>) -> (SyntaxKind, &'a str) {
+fn convert_token<'a>(
+    token: &'a Token,
+    pos: usize,
+    errors: &mut Vec<Error>,
+) -> (SyntaxKind, &'a str) {
     use rue_lexer::TokenKind as T;
     use rue_syntax::SyntaxKind as S;
 
+    let mut error = |message: String| {
+        errors.push(Error {
+            span: pos..(pos + token.text.len()),
+            message,
+        })
+    };
+
     let kind = match token.kind {
-        T::Unknown => S::Unknown,
+        T::Unknown => {
+            error(format!("unknown token `{}`", token.text));
+            S::Unknown
+        }
         T::Whitespace => S::Whitespace,
 
         T::Ident => S::Ident,
         T::Integer => S::Integer,
+        T::String { is_terminated } => {
+            if !is_terminated {
+                error(format!("unterminated string literal"));
+            }
+            S::String
+        }
 
         T::Fn => S::Fn,
 

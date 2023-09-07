@@ -58,6 +58,8 @@ impl<'a> Lexer<'a> {
             ',' => TokenKind::Comma,
             ':' => TokenKind::Colon,
 
+            '"' => self.string(),
+
             c if is_digit(c) => self.integer(),
             c if is_id_start(c) => self.ident(c),
             c if is_whitespace(c) => self.whitespace(),
@@ -69,6 +71,17 @@ impl<'a> Lexer<'a> {
             kind,
             text: &self.source[start..self.pos],
         })
+    }
+
+    fn string(&mut self) -> TokenKind {
+        let is_terminated = loop {
+            match self.bump() {
+                '\0' => break false,
+                '"' => break true,
+                _ => {}
+            }
+        };
+        TokenKind::String { is_terminated }
     }
 
     fn integer(&mut self) -> TokenKind {
