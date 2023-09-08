@@ -61,6 +61,8 @@ fn parse_fn_param_list(p: &mut Parser) {
 
         if p.peek() == SyntaxKind::Comma {
             p.bump();
+        } else {
+            break;
         }
     }
 
@@ -106,6 +108,24 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
         kind => {
             p.error(format!("expected expression, found {}", kind));
         }
+    }
+
+    if p.peek() == SyntaxKind::OpenParen {
+        p.start_at(checkpoint, SyntaxKind::CallExpr);
+        p.bump();
+
+        while !matches!(p.peek(), SyntaxKind::Eof | SyntaxKind::CloseParen) {
+            parse_expr(p);
+
+            if p.peek() == SyntaxKind::Comma {
+                p.bump();
+            } else {
+                break;
+            }
+        }
+
+        p.eat(SyntaxKind::CloseParen);
+        p.finish();
     }
 
     loop {

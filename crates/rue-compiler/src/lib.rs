@@ -96,7 +96,7 @@ impl Compiler {
         let quoted_expr = quote(&mut self.allocator, compiled_expr).unwrap();
 
         let args = items.into_iter().rev().fold(nil, |value, item| {
-            let compiled_item = self.compile_item(item);
+            let compiled_item = self.compile_item(&ctx, item);
 
             [op_c, compiled_item, value]
                 .into_iter()
@@ -114,8 +114,12 @@ impl Compiler {
             })
     }
 
-    fn compile_item(&mut self, _item: Item) -> NodePtr {
-        self.allocator.null()
+    fn compile_item(&mut self, ctx: &Environment, item: Item) -> NodePtr {
+        match item {
+            Item::FnDf(func) => {
+                todo!();
+            }
+        }
     }
 
     fn compile_expr(&mut self, ctx: &Environment, expr: Expr) -> NodePtr {
@@ -174,6 +178,37 @@ impl Compiler {
                     .fold(self.allocator.null(), |value, item| {
                         self.allocator.new_pair(item, value).unwrap()
                     })
+            }
+            Expr::Call(call) => {
+                let Some(target) = call.target() else {
+                    return self.allocator.null();
+                };
+
+                let compiled_target = self.compile_expr(ctx, target);
+
+                let op_a = self.allocator.new_number(2.into()).unwrap();
+                let op_c = self.allocator.new_number(4.into()).unwrap();
+                let nil = self.allocator.null();
+
+                [
+                    op_a,
+                    compiled_target,
+                    call.args().into_iter().rev().fold(nil, |value, arg| {
+                        let compiled_arg = self.compile_expr(ctx, arg);
+
+                        [op_c, compiled_arg, value]
+                            .into_iter()
+                            .rev()
+                            .fold(nil, |value, item| {
+                                self.allocator.new_pair(item, value).unwrap()
+                            })
+                    }),
+                ]
+                .into_iter()
+                .rev()
+                .fold(self.allocator.null(), |value, item| {
+                    self.allocator.new_pair(item, value).unwrap()
+                })
             }
         }
     }
