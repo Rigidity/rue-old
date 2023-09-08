@@ -27,7 +27,7 @@ impl FnDef {
         self.0.children().find_map(FnParamList::cast)
     }
 
-    pub fn return_ty(&self) -> Option<Type> {
+    pub fn return_type(&self) -> Option<Type> {
         self.0.children_with_tokens().filter_map(Type::cast).nth(1)
     }
 

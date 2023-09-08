@@ -1,5 +1,7 @@
-use rue_ast::Program;
+use hir::Database;
+use rue_ast as ast;
 use rue_compiler::Compiler;
+use rue_hir as hir;
 use rue_lexer::Lexer;
 use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
@@ -21,10 +23,14 @@ fn main() {
         return;
     }
 
-    let program = Program::cast(node);
+    let program = ast::Program::cast(node);
     let compiler = Compiler::new();
-    let output = compiler.compile(program.unwrap());
+    let output = compiler.compile(program.clone().unwrap());
 
     println!("{}\n", hex::encode(output.0));
     println!("Compile errors: {:?}", output.1);
+
+    let mut db = Database::default();
+    let hir = db.lower_program(program.unwrap());
+    dbg!(hir);
 }
