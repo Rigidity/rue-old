@@ -1,4 +1,4 @@
-use grammar::parse_program;
+use grammar::parse_root;
 use rowan::{Checkpoint, GreenNodeBuilder, Language};
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind};
@@ -41,7 +41,7 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse(mut self) -> Output {
-        parse_program(&mut self);
+        parse_root(&mut self);
         Output {
             green_node: self.builder.finish(),
             errors: self.errors,

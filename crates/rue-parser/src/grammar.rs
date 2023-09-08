@@ -2,8 +2,8 @@ use rue_syntax::SyntaxKind;
 
 use crate::Parser;
 
-pub(super) fn parse_program(p: &mut Parser) {
-    p.start(SyntaxKind::Program);
+pub(super) fn parse_root(p: &mut Parser) {
+    p.start(SyntaxKind::Scope);
 
     while is_item(p) {
         parse_item(p);
@@ -20,7 +20,7 @@ pub(super) fn parse_program(p: &mut Parser) {
 }
 
 fn parse_block(p: &mut Parser) {
-    p.start(SyntaxKind::Block);
+    p.start(SyntaxKind::Scope);
     p.eat(SyntaxKind::OpenBrace);
     while is_item(p) {
         parse_item(p);

@@ -3,11 +3,11 @@ use rue_syntax::{SyntaxKind, SyntaxNode};
 use crate::{Expr, Item};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Block(SyntaxNode);
+pub struct Scope(SyntaxNode);
 
-impl Block {
+impl Scope {
     pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::Block).then(|| Self(node))
+        (node.kind() == SyntaxKind::Scope).then(|| Self(node))
     }
 
     pub fn items(&self) -> Vec<Item> {

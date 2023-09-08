@@ -1,11 +1,9 @@
-mod block;
 mod expr;
 mod item;
-mod program;
+mod scope;
 mod ty;
 
-pub use block::*;
 pub use expr::*;
 pub use item::*;
-pub use program::*;
+pub use scope::*;
 pub use ty::*;

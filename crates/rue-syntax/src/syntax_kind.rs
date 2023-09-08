@@ -40,8 +40,7 @@ pub enum SyntaxKind {
     FnDef,
     FnParamList,
     FnParam,
-    Block,
-    Program,
+    Scope,
 }
 
 impl SyntaxKind {
@@ -89,8 +88,7 @@ impl fmt::Display for SyntaxKind {
             Self::FnDef => write!(f, "function"),
             Self::FnParamList => write!(f, "parameter list"),
             Self::FnParam => write!(f, "parameter"),
-            Self::Block => write!(f, "block"),
-            Self::Program => write!(f, "program"),
+            Self::Scope => write!(f, "scope"),
         }
     }
 }

@@ -1,6 +1,6 @@
 use la_arena::Idx;
 
-use crate::{Block, Type};
+use crate::{Scope, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Item {
@@ -8,7 +8,7 @@ pub enum Item {
         name: String,
         param_list: Vec<FnParam>,
         return_type: Idx<Type>,
-        block: Idx<Block>,
+        scope: Idx<Scope>,
     },
 }
 

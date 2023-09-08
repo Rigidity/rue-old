@@ -545,6 +545,7 @@ dependencies = [
  "indexmap",
  "num-bigint",
  "rue-ast",
+ "rue-hir",
 ]
 
 [[package]]

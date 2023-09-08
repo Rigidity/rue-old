@@ -5,16 +5,16 @@ use num_bigint::BigInt;
 use rue_ast as ast;
 use rue_syntax::SyntaxToken;
 
-mod block;
+mod error;
 mod expr;
 mod item;
-mod program;
+mod scope;
 mod ty;
 
-pub use block::*;
+pub use error::*;
 pub use expr::*;
 pub use item::*;
-pub use program::*;
+pub use scope::*;
 pub use ty::*;
 
 #[derive(Debug, Default)]
@@ -22,11 +22,12 @@ pub struct Database {
     exprs: Arena<Expr>,
     items: Arena<Item>,
     types: Arena<Type>,
-    blocks: Arena<Block>,
+    scopes: Arena<Scope>,
+    errors: Vec<Error>,
 }
 
 impl Database {
-    pub fn lower_program(&mut self, ast: ast::Program) -> Program {
+    pub fn lower_scope(&mut self, ast: ast::Scope) -> Scope {
         let mut items = Vec::new();
         for item in ast.items() {
             items.push(self.lower_item(item));
@@ -37,7 +38,7 @@ impl Database {
             None => Expr::Error,
         };
 
-        Program {
+        Scope {
             items: self.items.alloc_many(items).collect(),
             expr: self.exprs.alloc(expr),
         }
@@ -75,9 +76,9 @@ impl Database {
             None => Type::Error,
         };
 
-        let block = match ast.block() {
-            Some(block) => self.lower_block(block),
-            None => Block {
+        let scope = match ast.scope() {
+            Some(scope) => self.lower_scope(scope),
+            None => Scope {
                 items: vec![],
                 expr: self.exprs.alloc(Expr::Error),
             },
@@ -90,7 +91,7 @@ impl Database {
                 .unwrap_or_default(),
             param_list,
             return_type: self.types.alloc(return_type),
-            block: self.blocks.alloc(block),
+            scope: self.scopes.alloc(scope),
         }
     }
 
@@ -99,23 +100,6 @@ impl Database {
             ast::Type::Named(ast) => Type::Named {
                 name: ast.text().to_string(),
             },
-        }
-    }
-
-    fn lower_block(&mut self, ast: ast::Block) -> Block {
-        let mut items = Vec::new();
-        for item in ast.items() {
-            items.push(self.lower_item(item));
-        }
-
-        let expr = match ast.expr() {
-            Some(expr) => self.lower_expr(expr),
-            None => Expr::Error,
-        };
-
-        Block {
-            items: self.items.alloc_many(items).collect(),
-            expr: self.exprs.alloc(expr),
         }
     }
 
