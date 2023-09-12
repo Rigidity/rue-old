@@ -1,5 +1,6 @@
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Type {
-    Error,
-    Named { name: String },
+    Unknown,
+    Int,
+    String,
 }

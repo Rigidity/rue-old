@@ -1,6 +1,8 @@
 use la_arena::Idx;
 use num_bigint::BigInt;
 
+use crate::Path;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinaryOp {
     Add,
@@ -19,7 +21,7 @@ pub enum Expr {
         value: String,
     },
     BindingRef {
-        name: String,
+        path: Path,
     },
     Binary {
         lhs: Idx<Expr>,
