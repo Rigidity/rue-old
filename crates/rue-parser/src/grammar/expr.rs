@@ -1,4 +1,4 @@
-use rue_syntax::SyntaxKind;
+use rue_syntax::{SyntaxKind, T};
 
 use crate::Parser;
 
@@ -41,7 +41,7 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
         SyntaxKind::Integer | SyntaxKind::String | SyntaxKind::Ident => {
             p.bump();
         }
-        SyntaxKind::Minus => {
+        T![-] => {
             let op = PrefixOp::Neg;
             let right_binding_power = op.binding_power();
 
@@ -50,31 +50,31 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
             parse_expr_binding_power(p, right_binding_power);
             p.finish();
         }
-        SyntaxKind::OpenParen => {
+        T!['('] => {
             p.bump();
             parse_expr(p);
-            p.eat(SyntaxKind::CloseParen);
+            p.eat(T![')']);
         }
         kind => {
             p.error(format!("expected expression, found {kind}"));
         }
     }
 
-    if p.peek() == SyntaxKind::OpenParen {
+    if p.peek() == T!['('] {
         p.start_at(checkpoint, SyntaxKind::CallExpr);
         p.bump();
 
-        while !matches!(p.peek(), SyntaxKind::Eof | SyntaxKind::CloseParen) {
+        while !matches!(p.peek(), SyntaxKind::Eof | T![')']) {
             parse_expr(p);
 
-            if p.peek() == SyntaxKind::Comma {
+            if p.peek() == T![,] {
                 p.bump();
             } else {
                 break;
             }
         }
 
-        p.eat(SyntaxKind::CloseParen);
+        p.eat(T![')']);
         p.finish();
     }
 

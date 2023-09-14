@@ -126,3 +126,30 @@ impl fmt::Display for SyntaxKind {
         }
     }
 }
+
+#[macro_export]
+macro_rules! T {
+    [fn] => { SyntaxKind::Fn };
+    [if] => { SyntaxKind::If };
+    [else] => { SyntaxKind::Else };
+    [return] => { SyntaxKind::Return };
+    [let] => { SyntaxKind::Let };
+    ['('] => { SyntaxKind::OpenParen };
+    [')'] => { SyntaxKind::CloseParen };
+    ['['] => { SyntaxKind::OpenBracket };
+    [']'] => { SyntaxKind::CloseBracket };
+    ['{'] => { SyntaxKind::OpenBrace };
+    ['}'] => { SyntaxKind::CloseBrace };
+    [+] => { SyntaxKind::Plus };
+    [-] => { SyntaxKind::Minus };
+    [*] => { SyntaxKind::Star };
+    [/] => { SyntaxKind::Slash };
+    [>] => { SyntaxKind::GreaterThan };
+    [<] => { SyntaxKind::LessThan };
+    [=] => { SyntaxKind::Equals };
+    [.] => { SyntaxKind::Dot };
+    [,] => { SyntaxKind::Comma };
+    [:] => { SyntaxKind::Colon };
+    [;] => { SyntaxKind::Semicolon };
+    [->] => { SyntaxKind::Arrow };
+}

@@ -1,7 +1,7 @@
 use grammar::parse_root;
 use rowan::{Checkpoint, GreenNodeBuilder, Language};
 use rue_lexer::Token;
-use rue_syntax::{RueLang, SyntaxKind};
+use rue_syntax::{RueLang, SyntaxKind, T};
 
 mod error;
 mod grammar;
@@ -93,15 +93,12 @@ impl<'a> Parser<'a> {
 
     fn eat(&mut self, kind: SyntaxKind) -> bool {
         match kind {
-            SyntaxKind::Arrow => {
-                if (self.nth_raw(0), self.nth_raw(1))
-                    == (SyntaxKind::Minus, SyntaxKind::GreaterThan)
-                {
+            T![->] => {
+                if (self.nth_raw(0), self.nth_raw(1)) == (T![-], T![>]) {
                     let (a, b) = (self.tokens[self.pos], self.tokens[self.pos + 1]);
                     let mut text = String::from(a.1);
                     text.push_str(b.1);
-                    self.builder
-                        .token(RueLang::kind_to_raw(SyntaxKind::Arrow), &text);
+                    self.builder.token(RueLang::kind_to_raw(kind), &text);
                     self.pos += 2;
                     self.text_pos += text.len();
                     true
@@ -172,7 +169,6 @@ fn convert_token<'a>(
     errors: &mut Vec<Error>,
 ) -> (SyntaxKind, &'a str) {
     use rue_lexer::TokenKind as T;
-    use rue_syntax::SyntaxKind as S;
 
     let mut error = |message: String| {
         errors.push(Error {
@@ -184,45 +180,45 @@ fn convert_token<'a>(
     let kind = match token.kind {
         T::Unknown => {
             error(format!("unknown token `{}`", token.text));
-            S::Unknown
+            SyntaxKind::Unknown
         }
-        T::Whitespace => S::Whitespace,
+        T::Whitespace => SyntaxKind::Whitespace,
 
-        T::Ident => S::Ident,
-        T::Integer => S::Integer,
+        T::Ident => SyntaxKind::Ident,
+        T::Integer => SyntaxKind::Integer,
         T::String { is_terminated } => {
             if !is_terminated {
                 error(format!("unterminated string literal"));
             }
-            S::String
+            SyntaxKind::String
         }
 
-        T::Fn => S::Fn,
-        T::If => S::If,
-        T::Else => S::Else,
-        T::Return => S::Return,
-        T::Let => S::Let,
+        T::Fn => T![fn],
+        T::If => T![if],
+        T::Else => T![else],
+        T::Return => T![return],
+        T::Let => T![let],
 
-        T::Plus => S::Plus,
-        T::Minus => S::Minus,
-        T::Star => S::Star,
-        T::Slash => S::Slash,
+        T::Plus => T![+],
+        T::Minus => T![-],
+        T::Star => T![*],
+        T::Slash => T![/],
 
-        T::GreaterThan => S::GreaterThan,
-        T::LessThan => S::LessThan,
-        T::Equals => S::Equals,
+        T::GreaterThan => T![>],
+        T::LessThan => T![<],
+        T::Equals => T![=],
 
-        T::OpenParen => S::OpenParen,
-        T::CloseParen => S::CloseParen,
-        T::OpenBracket => S::OpenBracket,
-        T::CloseBracket => S::CloseBracket,
-        T::OpenBrace => S::OpenBrace,
-        T::CloseBrace => S::CloseBrace,
+        T::OpenParen => T!['('],
+        T::CloseParen => T![')'],
+        T::OpenBracket => T!['['],
+        T::CloseBracket => T![']'],
+        T::OpenBrace => T!['{'],
+        T::CloseBrace => T!['}'],
 
-        T::Dot => S::Dot,
-        T::Comma => S::Comma,
-        T::Colon => S::Colon,
-        T::Semicolon => S::Semicolon,
+        T::Dot => T![.],
+        T::Comma => T![,],
+        T::Colon => T![:],
+        T::Semicolon => T![;],
     };
 
     (kind, token.text)

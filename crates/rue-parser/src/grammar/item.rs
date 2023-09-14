@@ -1,4 +1,4 @@
-use rue_syntax::SyntaxKind;
+use rue_syntax::{SyntaxKind, T};
 
 use crate::Parser;
 
@@ -6,17 +6,17 @@ use super::{parse_block, ty::parse_type};
 
 pub(super) fn parse_item(p: &mut Parser) {
     match p.peek() {
-        SyntaxKind::Fn => parse_fn_item(p),
+        T![fn] => parse_fn_item(p),
         kind => p.error(format!("expected item, found {kind}")),
     }
 }
 
 fn parse_fn_item(p: &mut Parser) {
     p.start(SyntaxKind::FnItem);
-    p.eat(SyntaxKind::Fn);
+    p.eat(T![fn]);
     p.eat(SyntaxKind::Ident);
     parse_fn_param_list(p);
-    p.eat(SyntaxKind::Arrow);
+    p.eat(T![->]);
     parse_type(p);
     parse_block(p);
     p.finish();
@@ -24,26 +24,26 @@ fn parse_fn_item(p: &mut Parser) {
 
 fn parse_fn_param_list(p: &mut Parser) {
     p.start(SyntaxKind::FnParamList);
-    p.eat(SyntaxKind::OpenParen);
+    p.eat(T!['(']);
 
-    while !matches!(p.peek(), SyntaxKind::Eof | SyntaxKind::CloseParen) {
+    while !matches!(p.peek(), SyntaxKind::Eof | T![')']) {
         parse_fn_param(p);
 
-        if p.peek() == SyntaxKind::Comma {
+        if p.peek() == T![,] {
             p.bump();
         } else {
             break;
         }
     }
 
-    p.eat(SyntaxKind::CloseParen);
+    p.eat(T![')']);
     p.finish();
 }
 
 fn parse_fn_param(p: &mut Parser) {
     p.start(SyntaxKind::FnParam);
     p.eat(SyntaxKind::Ident);
-    p.eat(SyntaxKind::Colon);
+    p.eat(T![:]);
     parse_type(p);
     p.finish();
 }

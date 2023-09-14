@@ -1,4 +1,4 @@
-use rue_syntax::SyntaxKind;
+use rue_syntax::{SyntaxKind, T};
 
 use crate::Parser;
 
@@ -23,11 +23,11 @@ pub(super) fn parse_root(p: &mut Parser) {
 
 fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
-    p.eat(SyntaxKind::OpenBrace);
+    p.eat(T!['{']);
     while is_stmt(p) {
         parse_stmt(p);
     }
     parse_expr(p);
-    p.eat(SyntaxKind::CloseBrace);
+    p.eat(T!['}']);
     p.finish();
 }
