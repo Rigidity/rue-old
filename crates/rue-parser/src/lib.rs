@@ -74,14 +74,10 @@ impl<'a> Parser<'a> {
             .unwrap_or_default()
     }
 
-    fn bump(&mut self) -> bool {
+    fn bump(&mut self) {
         self.eat_trivia();
-        match self.tokens.get(self.pos) {
-            Some(token) => {
-                self.do_bump(*token);
-                true
-            }
-            None => false,
+        if let Some(token) = self.tokens.get(self.pos) {
+            self.do_bump(*token);
         }
     }
 
