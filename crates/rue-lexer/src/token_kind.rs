@@ -8,9 +8,15 @@ pub enum TokenKind {
     String { is_terminated: bool },
 
     Fn,
+    If,
+    Else,
+    Return,
+    Let,
 
     OpenParen,
     CloseParen,
+    OpenBracket,
+    CloseBracket,
     OpenBrace,
     CloseBrace,
 
@@ -21,7 +27,10 @@ pub enum TokenKind {
 
     GreaterThan,
     LessThan,
+    Equals,
 
+    Dot,
     Comma,
     Colon,
+    Semicolon,
 }

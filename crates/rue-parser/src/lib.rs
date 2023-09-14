@@ -198,6 +198,10 @@ fn convert_token<'a>(
         }
 
         T::Fn => S::Fn,
+        T::If => S::If,
+        T::Else => S::Else,
+        T::Return => S::Return,
+        T::Let => S::Let,
 
         T::Plus => S::Plus,
         T::Minus => S::Minus,
@@ -206,14 +210,19 @@ fn convert_token<'a>(
 
         T::GreaterThan => S::GreaterThan,
         T::LessThan => S::LessThan,
+        T::Equals => S::Equals,
 
         T::OpenParen => S::OpenParen,
         T::CloseParen => S::CloseParen,
+        T::OpenBracket => S::OpenBracket,
+        T::CloseBracket => S::CloseBracket,
         T::OpenBrace => S::OpenBrace,
         T::CloseBrace => S::CloseBrace,
 
+        T::Dot => S::Dot,
         T::Comma => S::Comma,
         T::Colon => S::Colon,
+        T::Semicolon => S::Semicolon,
     };
 
     (kind, token.text)

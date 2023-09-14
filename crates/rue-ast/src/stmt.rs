@@ -1,18 +1,18 @@
 use rue_syntax::SyntaxNode;
 
-mod fn_item;
+mod let_stmt;
 
-pub use fn_item::*;
+pub use let_stmt::*;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Item {
-    Fn(FnItem),
+pub enum Stmt {
+    Let(LetStmt),
 }
 
-impl Item {
+impl Stmt {
     pub fn cast(node: SyntaxNode) -> Option<Self> {
-        if let Some(value) = FnItem::cast(node) {
-            Some(Self::Fn(value))
+        if let Some(value) = LetStmt::cast(node) {
+            Some(Self::Let(value))
         } else {
             None
         }

@@ -44,6 +44,8 @@ impl<'a> Lexer<'a> {
             EOF => return None,
             '(' => TokenKind::OpenParen,
             ')' => TokenKind::CloseParen,
+            '[' => TokenKind::OpenBracket,
+            ']' => TokenKind::CloseBracket,
             '{' => TokenKind::OpenBrace,
             '}' => TokenKind::CloseBrace,
 
@@ -54,9 +56,12 @@ impl<'a> Lexer<'a> {
 
             '>' => TokenKind::GreaterThan,
             '<' => TokenKind::LessThan,
+            '=' => TokenKind::Equals,
 
+            '.' => TokenKind::Dot,
             ',' => TokenKind::Comma,
             ':' => TokenKind::Colon,
+            ';' => TokenKind::Semicolon,
 
             '"' => self.string(),
 
@@ -100,6 +105,10 @@ impl<'a> Lexer<'a> {
 
         match ident.as_str() {
             "fn" => TokenKind::Fn,
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            "return" => TokenKind::Return,
+            "let" => TokenKind::Let,
             _ => TokenKind::Ident,
         }
     }

@@ -17,9 +17,15 @@ pub enum SyntaxKind {
     String,
 
     Fn,
+    If,
+    Else,
+    Return,
+    Let,
 
     OpenParen,
     CloseParen,
+    OpenBracket,
+    CloseBracket,
     OpenBrace,
     CloseBrace,
 
@@ -30,17 +36,28 @@ pub enum SyntaxKind {
 
     GreaterThan,
     LessThan,
+    Equals,
 
+    Dot,
     Comma,
     Colon,
+    Semicolon,
+
     Arrow,
 
+    PrefixExpr,
     BinaryExpr,
     CallExpr,
-    FnDef,
+    IfExpr,
+
+    LetStmt,
+
+    FnItem,
     FnParamList,
     FnParam,
-    Scope,
+
+    Block,
+    Program,
 }
 
 impl SyntaxKind {
@@ -65,9 +82,15 @@ impl fmt::Display for SyntaxKind {
             Self::String => write!(f, "string"),
 
             Self::Fn => write!(f, "`fn`"),
+            Self::If => write!(f, "`if`"),
+            Self::Else => write!(f, "`else`"),
+            Self::Return => write!(f, "`return`"),
+            Self::Let => write!(f, "`let`"),
 
             Self::OpenParen => write!(f, "`(`"),
             Self::CloseParen => write!(f, "`)`"),
+            Self::OpenBracket => write!(f, "`[`"),
+            Self::CloseBracket => write!(f, "`]`"),
             Self::OpenBrace => write!(f, "`{{`"),
             Self::CloseBrace => write!(f, "`}}`"),
 
@@ -78,17 +101,28 @@ impl fmt::Display for SyntaxKind {
 
             Self::GreaterThan => write!(f, "`>`"),
             Self::LessThan => write!(f, "`<`"),
+            Self::Equals => write!(f, "`=`"),
 
+            Self::Dot => write!(f, "`.`"),
             Self::Comma => write!(f, "`,`"),
             Self::Colon => write!(f, "`:`"),
+            Self::Semicolon => write!(f, "`;`"),
+
             Self::Arrow => write!(f, "`->`"),
 
+            Self::PrefixExpr => write!(f, "prefix expression"),
             Self::BinaryExpr => write!(f, "binary expression"),
             Self::CallExpr => write!(f, "call expression"),
-            Self::FnDef => write!(f, "function"),
+            Self::IfExpr => write!(f, "`if` expression"),
+
+            Self::LetStmt => write!(f, "`let` statement"),
+
+            Self::FnItem => write!(f, "`fn` item"),
             Self::FnParamList => write!(f, "parameter list"),
             Self::FnParam => write!(f, "parameter"),
-            Self::Scope => write!(f, "scope"),
+
+            Self::Program => write!(f, "program"),
+            Self::Block => write!(f, "block"),
         }
     }
 }

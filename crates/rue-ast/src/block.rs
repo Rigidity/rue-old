@@ -1,17 +1,17 @@
 use rue_syntax::{SyntaxKind, SyntaxNode};
 
-use crate::{Expr, Item};
+use crate::{Expr, Stmt};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Scope(SyntaxNode);
+pub struct Block(SyntaxNode);
 
-impl Scope {
+impl Block {
     pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::Scope).then(|| Self(node))
+        (node.kind() == SyntaxKind::Block).then(|| Self(node))
     }
 
-    pub fn items(&self) -> Vec<Item> {
-        self.0.children().filter_map(Item::cast).collect()
+    pub fn stmts(&self) -> Vec<Stmt> {
+        self.0.children().filter_map(Stmt::cast).collect()
     }
 
     pub fn expr(&self) -> Option<Expr> {

@@ -3,30 +3,47 @@ use rue_syntax::SyntaxKind;
 use crate::Parser;
 
 pub(super) fn parse_root(p: &mut Parser) {
-    p.start(SyntaxKind::Scope);
-
-    while is_item(p) {
+    p.start(SyntaxKind::Program);
+    while p.peek() != SyntaxKind::Eof {
         parse_item(p);
     }
-
-    parse_expr(p);
-
-    let kind = p.peek();
-    if kind != SyntaxKind::Eof {
-        p.error(format!("expected eof, found {}", kind));
-    }
-
     p.finish();
 }
 
 fn parse_block(p: &mut Parser) {
-    p.start(SyntaxKind::Scope);
+    p.start(SyntaxKind::Block);
     p.eat(SyntaxKind::OpenBrace);
-    while is_item(p) {
-        parse_item(p);
+    while is_stmt(p) {
+        parse_stmt(p);
     }
     parse_expr(p);
     p.eat(SyntaxKind::CloseBrace);
+    p.finish();
+}
+
+fn is_stmt(p: &mut Parser) -> bool {
+    matches!(p.peek(), SyntaxKind::Let)
+}
+
+fn parse_stmt(p: &mut Parser) {
+    match p.peek() {
+        SyntaxKind::Let => parse_let_stmt(p),
+        kind => p.error(format!("expected statement, found {kind}")),
+    }
+}
+
+fn parse_let_stmt(p: &mut Parser) {
+    p.start(SyntaxKind::LetStmt);
+    p.eat(SyntaxKind::Let);
+    p.eat(SyntaxKind::Ident);
+
+    if p.peek() == SyntaxKind::Colon {
+        p.bump();
+        parse_type(p);
+    }
+
+    p.eat(SyntaxKind::Equals);
+    parse_expr(p);
     p.finish();
 }
 
@@ -36,13 +53,13 @@ fn is_item(p: &mut Parser) -> bool {
 
 fn parse_item(p: &mut Parser) {
     match p.peek() {
-        SyntaxKind::Fn => parse_fn_def(p),
-        kind => p.error(format!("expected item, found {}", kind)),
+        SyntaxKind::Fn => parse_fn_item(p),
+        kind => p.error(format!("expected item, found {kind}")),
     }
 }
 
-fn parse_fn_def(p: &mut Parser) {
-    p.start(SyntaxKind::FnDef);
+fn parse_fn_item(p: &mut Parser) {
+    p.start(SyntaxKind::FnItem);
     p.eat(SyntaxKind::Fn);
     p.eat(SyntaxKind::Ident);
     parse_fn_param_list(p);
@@ -78,18 +95,39 @@ fn parse_fn_param(p: &mut Parser) {
     p.finish();
 }
 
-enum Op {
+fn parse_type(p: &mut Parser) {
+    match p.peek() {
+        SyntaxKind::Ident => {
+            p.bump();
+        }
+        kind => p.error(format!("expected type, found {kind}")),
+    }
+}
+
+enum InfixOp {
     Add,
     Sub,
     Mul,
     Div,
 }
 
-impl Op {
+impl InfixOp {
     fn binding_power(&self) -> (u8, u8) {
         match self {
             Self::Add | Self::Sub => (1, 2),
             Self::Mul | Self::Div => (3, 4),
+        }
+    }
+}
+
+enum PrefixOp {
+    Neg,
+}
+
+impl PrefixOp {
+    fn binding_power(&self) -> u8 {
+        match self {
+            Self::Neg => 5,
         }
     }
 }
@@ -105,8 +143,22 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
         SyntaxKind::Integer | SyntaxKind::String | SyntaxKind::Ident => {
             p.bump();
         }
+        SyntaxKind::Minus => {
+            let op = PrefixOp::Neg;
+            let right_binding_power = op.binding_power();
+
+            p.start_at(checkpoint, SyntaxKind::PrefixExpr);
+            p.bump();
+            parse_expr_binding_power(p, right_binding_power);
+            p.finish();
+        }
+        SyntaxKind::OpenParen => {
+            p.bump();
+            parse_expr(p);
+            p.eat(SyntaxKind::CloseParen);
+        }
         kind => {
-            p.error(format!("expected expression, found {}", kind));
+            p.error(format!("expected expression, found {kind}"));
         }
     }
 
@@ -130,10 +182,10 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
 
     loop {
         let op = match p.peek() {
-            SyntaxKind::Plus => Op::Add,
-            SyntaxKind::Minus => Op::Sub,
-            SyntaxKind::Star => Op::Mul,
-            SyntaxKind::Slash => Op::Div,
+            SyntaxKind::Plus => InfixOp::Add,
+            SyntaxKind::Minus => InfixOp::Sub,
+            SyntaxKind::Star => InfixOp::Mul,
+            SyntaxKind::Slash => InfixOp::Div,
             _ => return,
         };
 
@@ -148,14 +200,5 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
         p.start_at(checkpoint, SyntaxKind::BinaryExpr);
         parse_expr_binding_power(p, right_binding_power);
         p.finish();
-    }
-}
-
-fn parse_type(p: &mut Parser) {
-    match p.peek() {
-        SyntaxKind::Ident => {
-            p.bump();
-        }
-        kind => p.error(format!("expected type, found {}", kind)),
     }
 }

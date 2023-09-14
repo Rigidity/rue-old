@@ -6,14 +6,14 @@ mod fn_param_list;
 pub use fn_param::*;
 pub use fn_param_list::*;
 
-use crate::{Scope, Type};
+use crate::{Block, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnDef(SyntaxNode);
+pub struct FnItem(SyntaxNode);
 
-impl FnDef {
+impl FnItem {
     pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::FnDef).then(|| Self(node))
+        (node.kind() == SyntaxKind::FnItem).then(|| Self(node))
     }
 
     pub fn name(&self) -> Option<SyntaxToken> {
@@ -31,7 +31,7 @@ impl FnDef {
         self.0.children_with_tokens().filter_map(Type::cast).nth(1)
     }
 
-    pub fn scope(&self) -> Option<Scope> {
-        self.0.children().find_map(Scope::cast)
+    pub fn block(&self) -> Option<Block> {
+        self.0.children().find_map(Block::cast)
     }
 }
