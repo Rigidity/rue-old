@@ -79,7 +79,6 @@ impl<'a> Lexer<'a> {
             "fn" => TokenKind::Fn,
             "if" => TokenKind::If,
             "else" => TokenKind::Else,
-            "return" => TokenKind::Return,
             "let" => TokenKind::Let,
             _ => TokenKind::Ident,
         }
@@ -136,7 +135,6 @@ mod tests {
         check("fn", &[TokenKind::Fn]);
         check("if", &[TokenKind::If]);
         check("else", &[TokenKind::Else]);
-        check("return", &[TokenKind::Return]);
         check("let", &[TokenKind::Let]);
     }
 

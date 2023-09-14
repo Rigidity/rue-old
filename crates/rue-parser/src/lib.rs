@@ -192,7 +192,6 @@ fn convert_token<'a>(
         T::Fn => T![fn],
         T::If => T![if],
         T::Else => T![else],
-        T::Return => T![return],
         T::Let => T![let],
 
         T::Plus => T![+],

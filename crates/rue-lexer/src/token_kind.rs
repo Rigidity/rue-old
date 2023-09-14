@@ -10,7 +10,6 @@ pub enum TokenKind {
     Fn,
     If,
     Else,
-    Return,
     Let,
 
     OpenParen,
