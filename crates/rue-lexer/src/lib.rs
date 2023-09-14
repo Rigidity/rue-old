@@ -1,44 +1,16 @@
-use std::str::Chars;
-
+mod lexer;
 mod token;
 mod token_kind;
 
+pub use lexer::*;
 pub use token::*;
 pub use token_kind::*;
 
 const EOF: char = '\0';
 
-pub struct Lexer<'a> {
-    source: &'a str,
-    pos: usize,
-    chars: Chars<'a>,
-}
-
 impl<'a> Lexer<'a> {
-    pub fn new(source: &'a str) -> Self {
-        Self {
-            source,
-            pos: 0,
-            chars: source.chars(),
-        }
-    }
-
-    fn peek(&self) -> char {
-        self.chars.clone().next().unwrap_or_default()
-    }
-
-    fn bump(&mut self) -> char {
-        match self.chars.next() {
-            Some(c) => {
-                self.pos += c.len_utf8();
-                c
-            }
-            None => '\0',
-        }
-    }
-
     fn token(&mut self) -> Option<Token<'a>> {
-        let start = self.pos;
+        let start = self.pos();
 
         let kind = match self.bump() {
             EOF => return None,
@@ -74,7 +46,7 @@ impl<'a> Lexer<'a> {
 
         Some(Token {
             kind,
-            text: &self.source[start..self.pos],
+            text: &self.source()[start..self.pos()],
         })
     }
 
@@ -118,14 +90,6 @@ impl<'a> Lexer<'a> {
             self.bump();
         }
         TokenKind::Whitespace
-    }
-}
-
-impl<'a> Iterator for Lexer<'a> {
-    type Item = Token<'a>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.token()
     }
 }
 
