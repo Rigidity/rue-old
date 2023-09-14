@@ -1,3 +1,16 @@
-fn main() -> Int {
-    -(3 + 2)
+fn factorial(num: Int) -> Int {
+    if num > 1 {
+        num * factorial(num - 1)
+    } else {
+        num
+    }
+}
+
+fn compute(value: Int) -> Int {
+    let squared = value * value;
+    let doubled = squared * 2;
+    let tripled = doubled * 3;
+    let cubed = tripled * tripled * tripled;
+    let divided = cubed / 1000;
+    squared + doubled + tripled + cubed + divided
 }

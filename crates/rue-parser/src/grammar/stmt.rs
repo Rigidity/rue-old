@@ -27,5 +27,6 @@ fn parse_let_stmt(p: &mut Parser) {
 
     p.eat(T![=]);
     parse_expr(p);
+    p.eat(T![;]);
     p.finish();
 }

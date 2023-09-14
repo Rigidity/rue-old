@@ -1,46 +1,19 @@
 use rowan::Checkpoint;
 use rue_syntax::{SyntaxKind, T};
 
-use crate::Parser;
-
-enum PrefixOp {
-    Neg,
-}
-
-impl PrefixOp {
-    fn binding_power(&self) -> u8 {
-        match self {
-            Self::Neg => 5,
-        }
-    }
-}
-
-enum BinaryOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-}
-
-impl BinaryOp {
-    fn binding_power(&self) -> (u8, u8) {
-        match self {
-            Self::Add | Self::Sub => (1, 2),
-            Self::Mul | Self::Div => (3, 4),
-        }
-    }
-}
+use crate::{grammar::parse_block, Parser};
 
 pub(super) fn parse_expr(p: &mut Parser) {
-    parse_expr_binding_power(p, 0);
+    parse_binary_expr(p, 0);
 }
 
-fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
+fn parse_binary_expr(p: &mut Parser, min_binding_power: u8) {
     let checkpoint = p.checkpoint();
 
     match p.peek() {
         SyntaxKind::Integer | SyntaxKind::String | SyntaxKind::Ident => p.bump(),
-        T![-] => parse_prefix_expr(checkpoint, p, PrefixOp::Neg),
+        T![if] => parse_if_expr(checkpoint, p),
+        T![-] => parse_prefix_expr(checkpoint, p, 7),
         T!['('] => parse_group_expr(p),
         kind => p.error(format!("expected expression, found {kind}")),
     }
@@ -50,35 +23,29 @@ fn parse_expr_binding_power(p: &mut Parser, min_binding_power: u8) {
     }
 
     loop {
-        let op = match p.peek() {
-            SyntaxKind::Plus => BinaryOp::Add,
-            SyntaxKind::Minus => BinaryOp::Sub,
-            SyntaxKind::Star => BinaryOp::Mul,
-            SyntaxKind::Slash => BinaryOp::Div,
+        let (left_binding_power, right_binding_power) = match p.peek() {
+            T![<] | T![>] => (1, 2),
+            T![+] | T![-] => (3, 4),
+            T![*] | T![/] => (5, 6),
             _ => return,
         };
-        parse_binary_expr(checkpoint, p, min_binding_power, op);
+
+        if left_binding_power < min_binding_power {
+            return;
+        }
+
+        p.bump();
+
+        p.start_at(checkpoint, SyntaxKind::BinaryExpr);
+        parse_binary_expr(p, right_binding_power);
+        p.finish();
     }
 }
 
-fn parse_prefix_expr(checkpoint: Checkpoint, p: &mut Parser, op: PrefixOp) {
+fn parse_prefix_expr(checkpoint: Checkpoint, p: &mut Parser, op_binding_power: u8) {
     p.start_at(checkpoint, SyntaxKind::PrefixExpr);
     p.bump();
-    parse_expr_binding_power(p, op.binding_power());
-    p.finish();
-}
-
-fn parse_binary_expr(checkpoint: Checkpoint, p: &mut Parser, min_binding_power: u8, op: BinaryOp) {
-    let (left_binding_power, right_binding_power) = op.binding_power();
-
-    if left_binding_power < min_binding_power {
-        return;
-    }
-
-    p.bump();
-
-    p.start_at(checkpoint, SyntaxKind::BinaryExpr);
-    parse_expr_binding_power(p, right_binding_power);
+    parse_binary_expr(p, op_binding_power);
     p.finish();
 }
 
@@ -108,4 +75,18 @@ fn parse_call_expr(checkpoint: Checkpoint, p: &mut Parser) {
 
     p.eat(T![')']);
     p.finish();
+}
+
+fn parse_if_expr(checkpoint: Checkpoint, p: &mut Parser) {
+    debug_assert!(p.peek() == T![if]);
+
+    p.start_at(checkpoint, SyntaxKind::IfExpr);
+    p.bump();
+    parse_expr(p);
+    parse_block(p);
+
+    if p.peek() == T![else] {
+        p.bump();
+        parse_block(p);
+    }
 }
