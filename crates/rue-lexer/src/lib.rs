@@ -108,3 +108,94 @@ fn is_whitespace(c: char) -> bool {
 fn is_digit(c: char) -> bool {
     matches!(c, '0'..='9')
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn check(source: &str, expected: &[TokenKind]) {
+        let actual: Vec<TokenKind> = Lexer::new(source).map(|token| token.kind).collect();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn whitespace() {
+        check("    ", &[TokenKind::Whitespace]);
+        check("\t", &[TokenKind::Whitespace]);
+        check("\n", &[TokenKind::Whitespace]);
+        check("\r\n", &[TokenKind::Whitespace]);
+        check("    \n\t\r\n\r", &[TokenKind::Whitespace]);
+    }
+
+    #[test]
+    fn ident() {
+        check("hello_world", &[TokenKind::Ident]);
+        check("SomethingImportant", &[TokenKind::Ident]);
+        check("A", &[TokenKind::Ident]);
+        check("_0", &[TokenKind::Ident]);
+        check("fn", &[TokenKind::Fn]);
+        check("if", &[TokenKind::If]);
+        check("else", &[TokenKind::Else]);
+        check("return", &[TokenKind::Return]);
+        check("let", &[TokenKind::Let]);
+    }
+
+    #[test]
+    fn integer() {
+        check("42", &[TokenKind::Integer]);
+        check("123456789", &[TokenKind::Integer]);
+        check("0", &[TokenKind::Integer]);
+    }
+
+    #[test]
+    fn string() {
+        check(
+            r#""Hello, world!""#,
+            &[TokenKind::String {
+                is_terminated: true,
+            }],
+        );
+        check(
+            r#""Hello, world!"#,
+            &[TokenKind::String {
+                is_terminated: false,
+            }],
+        );
+        check(
+            r#"""""""#,
+            &[
+                TokenKind::String {
+                    is_terminated: true,
+                },
+                TokenKind::String {
+                    is_terminated: true,
+                },
+                TokenKind::String {
+                    is_terminated: false,
+                },
+            ],
+        )
+    }
+
+    #[test]
+    fn delimiters() {
+        check("()", &[TokenKind::OpenParen, TokenKind::CloseParen]);
+        check("[]", &[TokenKind::OpenBracket, TokenKind::CloseBracket]);
+        check("{}", &[TokenKind::OpenBrace, TokenKind::CloseBrace]);
+    }
+
+    #[test]
+    fn punctuation() {
+        check("+", &[TokenKind::Plus]);
+        check("-", &[TokenKind::Minus]);
+        check("*", &[TokenKind::Star]);
+        check("/", &[TokenKind::Slash]);
+        check(">", &[TokenKind::GreaterThan]);
+        check("<", &[TokenKind::LessThan]);
+        check("=", &[TokenKind::Equals]);
+        check(".", &[TokenKind::Dot]);
+        check(",", &[TokenKind::Comma]);
+        check(":", &[TokenKind::Colon]);
+        check(";", &[TokenKind::Semicolon]);
+    }
+}
