@@ -5,12 +5,3 @@ fn factorial(num: Int) -> Int {
         num
     }
 }
-
-fn compute(value: Int) -> Int {
-    let squared = value * value;
-    let doubled = squared * 2;
-    let tripled = doubled * 3;
-    let cubed = tripled * tripled * tripled;
-    let divided = cubed / 1000;
-    squared + doubled + tripled + cubed + divided
-}
