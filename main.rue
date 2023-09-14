@@ -2,6 +2,6 @@ fn factorial(num: Int) -> Int {
     if num > 1 {
         num * factorial(num - 1)
     } else {
-        num
+        1
     }
 }
