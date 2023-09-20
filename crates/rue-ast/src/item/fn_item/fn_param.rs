@@ -18,6 +18,6 @@ impl FnParam {
     }
 
     pub fn ty(&self) -> Option<Type> {
-        self.0.children_with_tokens().find_map(Type::cast)
+        self.0.children_with_tokens().filter_map(Type::cast).nth(1)
     }
 }

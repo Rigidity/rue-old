@@ -911,9 +911,8 @@ name = "rue-compiler"
 version = "0.1.0"
 dependencies = [
  "clvmr",
- "indexmap",
  "num-bigint",
- "rue-ast",
+ "num-traits",
  "rue-hir",
 ]
 

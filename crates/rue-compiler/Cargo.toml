@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 clvmr = "0.3.0"
-indexmap = "2.0.0"
 num-bigint = "0.4.3"
-rue-ast = { version = "0.1.0", path = "../rue-ast" }
+num-traits = "0.2.15"
 rue-hir = { version = "0.1.0", path = "../rue-hir" }

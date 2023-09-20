@@ -84,9 +84,7 @@ fn parse_if_expr(checkpoint: Checkpoint, p: &mut Parser) {
     p.bump();
     parse_expr(p);
     parse_block(p);
-
-    if p.peek() == T![else] {
-        p.bump();
-        parse_block(p);
-    }
+    p.eat(T![else]);
+    parse_block(p);
+    p.finish()
 }
