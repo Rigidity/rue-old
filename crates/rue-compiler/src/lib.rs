@@ -25,7 +25,6 @@ impl Compiler {
         match value {
             Value::Integer(int) => self.compile_int(int),
             Value::String(string) => self.compile_string(string),
-            Value::Environment => self.compile_environment(),
         }
     }
 
