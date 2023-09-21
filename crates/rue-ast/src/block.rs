@@ -3,7 +3,7 @@ use rue_syntax::{SyntaxKind, SyntaxNode};
 use crate::{Expr, Stmt};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Block(SyntaxNode);
+pub struct Block(pub SyntaxNode);
 
 impl Block {
     pub fn cast(node: SyntaxNode) -> Option<Self> {

@@ -3,7 +3,7 @@ use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::{Expr, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct LetStmt(SyntaxNode);
+pub struct LetStmt(pub SyntaxNode);
 
 impl LetStmt {
     pub fn cast(node: SyntaxNode) -> Option<Self> {

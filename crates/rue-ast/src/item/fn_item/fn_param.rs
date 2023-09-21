@@ -3,7 +3,7 @@ use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use crate::Type;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnParam(SyntaxNode);
+pub struct FnParam(pub SyntaxNode);
 
 impl FnParam {
     pub fn cast(node: SyntaxNode) -> Option<Self> {

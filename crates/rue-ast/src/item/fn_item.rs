@@ -9,7 +9,7 @@ pub use fn_param_list::*;
 use crate::{Block, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnItem(SyntaxNode);
+pub struct FnItem(pub SyntaxNode);
 
 impl FnItem {
     pub fn cast(node: SyntaxNode) -> Option<Self> {

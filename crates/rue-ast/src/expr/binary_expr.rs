@@ -3,7 +3,7 @@ use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, T};
 use crate::Expr;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct BinaryExpr(SyntaxNode);
+pub struct BinaryExpr(pub SyntaxNode);
 
 impl BinaryExpr {
     pub fn cast(node: SyntaxNode) -> Option<Self> {

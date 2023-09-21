@@ -3,7 +3,7 @@ use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, T};
 use crate::Expr;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct PrefixExpr(SyntaxNode);
+pub struct PrefixExpr(pub SyntaxNode);
 
 impl PrefixExpr {
     pub fn cast(node: SyntaxNode) -> Option<Self> {
