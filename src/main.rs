@@ -1,5 +1,4 @@
 use rue_ast::Program;
-use rue_hir::Database;
 use rue_lexer::Lexer;
 use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
@@ -21,9 +20,5 @@ fn main() {
         return;
     }
 
-    let ast = Program::cast(node).unwrap();
-    let mut db = Database::new();
-    let result = db.lower_program(ast);
-
-    dbg!(db, result);
+    let _ast = Program::cast(node).unwrap();
 }
