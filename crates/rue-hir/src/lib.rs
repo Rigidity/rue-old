@@ -1,4 +1,4 @@
-use rue_ast::{BinaryExpr, Block, Expr, Item, Program};
+use rue_ast::{BinaryExpr, Expr, Item, Program};
 
 mod error;
 mod lowerer;
@@ -27,11 +27,11 @@ impl Lowerer {
         match expr {
             Expr::Integer(token) => self.lower_integer_expr(token),
             Expr::String(token) => self.lower_string_expr(token),
-            Expr::Ident(token) => todo!(),
+            Expr::Ident(_token) => todo!(),
             Expr::Binary(expr) => self.lower_binary_expr(expr),
-            Expr::Prefix(expr) => todo!(),
-            Expr::Call(expr) => todo!(),
-            Expr::If(expr) => todo!(),
+            Expr::Prefix(_expr) => todo!(),
+            Expr::Call(_expr) => todo!(),
+            Expr::If(_expr) => todo!(),
         }
     }
 
