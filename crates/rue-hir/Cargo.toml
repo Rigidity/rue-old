@@ -4,8 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-indexmap = "2.0.0"
-la-arena = "0.3.1"
 num-bigint = "0.4.3"
 rue-ast = { version = "0.1.0", path = "../rue-ast" }
 rue-syntax = { version = "0.1.0", path = "../rue-syntax" }

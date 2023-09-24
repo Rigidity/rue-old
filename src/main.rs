@@ -1,4 +1,5 @@
 use rue_ast::Program;
+use rue_hir::Lowerer;
 use rue_lexer::Lexer;
 use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
@@ -20,5 +21,10 @@ fn main() {
         return;
     }
 
-    let _ast = Program::cast(node).unwrap();
+    let program = Program::cast(node).unwrap();
+    let mut lowerer = Lowerer::new();
+    let value = lowerer.lower_program(program);
+
+    println!("{:?}\n", value);
+    println!("Compiler errors: {:?}", lowerer.errors());
 }

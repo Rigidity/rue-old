@@ -1,7 +1,3 @@
-fn fourty_two(num: Int) -> Int {
-    42 * num
-}
-
 fn main() -> Int {
-    fourty_two(2)
+    3 * 2
 }
