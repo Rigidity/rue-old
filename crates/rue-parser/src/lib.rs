@@ -179,6 +179,13 @@ fn convert_token<'a>(
             SyntaxKind::Unknown
         }
         T::Whitespace => SyntaxKind::Whitespace,
+        T::LineComment => SyntaxKind::LineComment,
+        T::BlockComment { is_terminated } => {
+            if !is_terminated {
+                error(format!("unterminated block comment"));
+            }
+            SyntaxKind::BlockComment
+        }
 
         T::Ident => SyntaxKind::Ident,
         T::Integer => SyntaxKind::Integer,

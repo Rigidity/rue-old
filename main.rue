@@ -6,8 +6,5 @@ fn main() -> Int {
     double(42) + double(6)
 }
 
--------------------------------
-
-ff02ffff01ff10ffff02ff02ffff04ffff012aff808080ffff02ff02ffff04ffff0106ff80808080ffff04ffff01ff12ff02ffff010280ff808080
-
-= 96
+// ff02ffff01ff10ffff02ff02ffff04ffff012aff808080ffff02ff02ffff04ffff0106ff80808080ffff04ffff01ff12ff02ffff010280ff808080
+/* = 96 */

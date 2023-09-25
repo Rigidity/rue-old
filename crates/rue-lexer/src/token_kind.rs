@@ -2,6 +2,8 @@
 pub enum TokenKind {
     Unknown,
     Whitespace,
+    LineComment,
+    BlockComment { is_terminated: bool },
 
     Ident,
     Integer,

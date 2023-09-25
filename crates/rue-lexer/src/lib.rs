@@ -24,7 +24,11 @@ impl<'a> Lexer<'a> {
             '+' => TokenKind::Plus,
             '-' => TokenKind::Minus,
             '*' => TokenKind::Star,
-            '/' => TokenKind::Slash,
+            '/' => match self.peek() {
+                '/' => self.line_comment(),
+                '*' => self.block_comment(),
+                _ => TokenKind::Slash,
+            },
 
             '>' => TokenKind::GreaterThan,
             '<' => TokenKind::LessThan,
@@ -48,6 +52,26 @@ impl<'a> Lexer<'a> {
             kind,
             text: &self.source()[start..self.pos()],
         })
+    }
+
+    fn line_comment(&mut self) -> TokenKind {
+        while !matches!(self.peek(), '\0' | '\n') {
+            self.bump();
+        }
+        TokenKind::LineComment
+    }
+
+    fn block_comment(&mut self) -> TokenKind {
+        self.bump();
+        let is_terminated = loop {
+            match self.bump() {
+                '\0' => break false,
+                '*' => break self.peek() == '/',
+                _ => {}
+            }
+        };
+        self.bump();
+        TokenKind::BlockComment { is_terminated }
     }
 
     fn string(&mut self) -> TokenKind {
@@ -124,6 +148,43 @@ mod tests {
         check("\n", &[TokenKind::Whitespace]);
         check("\r\n", &[TokenKind::Whitespace]);
         check("    \n\t\r\n\r", &[TokenKind::Whitespace]);
+    }
+
+    #[test]
+    fn comments() {
+        check("// xyz", &[TokenKind::LineComment]);
+        check(
+            "// xyz\n// abc",
+            &[
+                TokenKind::LineComment,
+                TokenKind::Whitespace,
+                TokenKind::LineComment,
+            ],
+        );
+        check(
+            "// xyz\r\n//abc",
+            &[
+                TokenKind::LineComment,
+                TokenKind::Whitespace,
+                TokenKind::LineComment,
+            ],
+        );
+
+        let terminated = TokenKind::BlockComment {
+            is_terminated: true,
+        };
+        let unterminated = TokenKind::BlockComment {
+            is_terminated: false,
+        };
+
+        check("/**/", &[terminated]);
+        check("/*", &[unterminated]);
+        check("/* xyz */", &[terminated]);
+        check("/* xyz", &[unterminated]);
+        check("/*xyz*/", &[terminated]);
+        check("/*xyz", &[unterminated]);
+        check("/*\n\n\n*/", &[terminated]);
+        check("/**//**/", &[terminated, terminated]);
     }
 
     #[test]

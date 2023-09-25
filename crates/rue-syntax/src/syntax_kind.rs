@@ -11,6 +11,8 @@ pub enum SyntaxKind {
     Unknown,
     Error,
     Whitespace,
+    LineComment,
+    BlockComment,
 
     Ident,
     Integer,
@@ -62,10 +64,10 @@ pub enum SyntaxKind {
 
 impl SyntaxKind {
     pub fn is_trivia(self) -> bool {
-        match self {
-            Self::Whitespace => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::Whitespace | Self::LineComment | Self::BlockComment
+        )
     }
 }
 
@@ -76,6 +78,8 @@ impl fmt::Display for SyntaxKind {
             Self::Unknown => write!(f, "unknown"),
             Self::Error => write!(f, "error"),
             Self::Whitespace => write!(f, "whitespace"),
+            Self::LineComment => write!(f, "line comment"),
+            Self::BlockComment => write!(f, "block comment"),
 
             Self::Ident => write!(f, "identifier"),
             Self::Integer => write!(f, "integer"),
