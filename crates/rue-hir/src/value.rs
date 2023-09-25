@@ -11,7 +11,6 @@ pub enum Value {
     Div(Vec<Value>),
 
     Reference(usize),
-    Environment(Box<Value>, Vec<Value>),
     Call(Box<Value>, Vec<Value>),
     Quote(Box<Value>),
 }

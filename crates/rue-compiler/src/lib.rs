@@ -41,8 +41,33 @@ impl Compiler {
     }
 
     pub fn compile_to_bytes(&mut self, value: Value) -> Vec<u8> {
+        let value = self.optimize(value);
         let ptr = self.compile(value);
         node_to_bytes(&self.allocator, ptr).unwrap()
+    }
+
+    fn optimize(&mut self, value: Value) -> Value {
+        match &value {
+            Value::Int(_) => value,
+            Value::String(_) => value,
+            Value::Add(_) => value,
+            Value::Sub(_) => value,
+            Value::Mul(_) => value,
+            Value::Div(_) => value,
+            Value::Reference(_) => value,
+            Value::Call(target, args) => {
+                if args.is_empty() {
+                    if let Value::Quote(inner) = target.as_ref() {
+                        *inner.clone()
+                    } else {
+                        value
+                    }
+                } else {
+                    value
+                }
+            }
+            Value::Quote(_) => value,
+        }
     }
 
     fn compile(&mut self, value: Value) -> NodePtr {
@@ -100,16 +125,6 @@ impl Compiler {
                     path += 1;
                 }
                 self.allocator.new_number(path.into()).unwrap()
-            }
-            Value::Environment(target, args) => {
-                let target = self.compile(target.as_ref().clone());
-                let target = self.quote(target).unwrap();
-                let args = args
-                    .into_iter()
-                    .map(|input| self.compile(input))
-                    .collect::<Vec<_>>();
-                let args = self.build_cons(&args, self.nil).unwrap();
-                self.new_list(&[self.op_a, target, args]).unwrap()
             }
             Value::Call(target, args) => {
                 let target = self.compile(target.as_ref().clone());
