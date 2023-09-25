@@ -1,7 +1,7 @@
-fn some() -> Int {
-    42
+fn double(num: Int) -> Int {
+    num * 2
 }
 
 fn main() -> Int {
-    some() * 2
+    double(42) + 6
 }

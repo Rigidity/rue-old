@@ -105,8 +105,25 @@ impl Lowerer {
     }
 
     fn lower_fn_item(&mut self, item: FnItem) -> Option<Value> {
-        self.lower_expr(item.block()?.expr()?)
-            .map(|typed| Value::Quote(Box::new(typed.value)))
+        self.scopes.push(Scope::new());
+
+        for param in item
+            .param_list()
+            .map(|list| list.params())
+            .unwrap_or_default()
+        {
+            let var_id = self.bind(param.name()?.text().to_string(), Type::Int);
+            self.scope_mut().used.insert(var_id);
+        }
+
+        let expr = item.block()?.expr()?;
+
+        let result = self
+            .lower_expr(expr)
+            .map(|typed| Value::Quote(Box::new(typed.value)));
+        self.scopes.pop();
+
+        result
     }
 
     fn lower_expr(&mut self, expr: Expr) -> Option<TypedValue> {
