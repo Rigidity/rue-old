@@ -26,6 +26,7 @@ impl fmt::Display for Type {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypedValue {
     pub ty: Type,
     pub value: Value,

@@ -15,8 +15,8 @@ fn main() {
     let tree = format!("{:#?}", node);
     let tree = &tree[0..(tree.len() - 1)];
 
-    println!("{}\n", tree);
-    println!("Parse errors: {:?}", output.errors);
+    println!("{}", tree);
+    println!("Parse errors: {:?}\n", output.errors);
 
     if !output.errors.is_empty() {
         return;
@@ -26,8 +26,8 @@ fn main() {
     let mut lowerer = Lowerer::new();
     let value = lowerer.lower_program(program);
 
-    println!("{:?}\n", value);
-    println!("Compiler errors: {:?}", lowerer.errors());
+    println!("{:?}", value);
+    println!("Compiler errors: {:?}\n", lowerer.errors());
 
     println!(
         "Compiled output: {}",

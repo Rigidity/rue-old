@@ -4,6 +4,10 @@ use rue_hir::Value;
 
 pub struct Compiler {
     allocator: Allocator,
+    nil: NodePtr,
+    op_q: NodePtr,
+    op_a: NodePtr,
+    op_c: NodePtr,
     op_add: NodePtr,
     op_sub: NodePtr,
     op_mul: NodePtr,
@@ -13,6 +17,11 @@ pub struct Compiler {
 impl Compiler {
     pub fn new() -> Self {
         let mut allocator = Allocator::new();
+
+        let nil = allocator.null();
+        let op_q = allocator.one();
+        let op_a = allocator.new_atom(&[2]).unwrap();
+        let op_c = allocator.new_atom(&[4]).unwrap();
         let op_add = allocator.new_atom(&[16]).unwrap();
         let op_sub = allocator.new_atom(&[17]).unwrap();
         let op_mul = allocator.new_atom(&[18]).unwrap();
@@ -20,6 +29,10 @@ impl Compiler {
 
         Self {
             allocator,
+            nil,
+            op_q,
+            op_a,
+            op_c,
             op_add,
             op_sub,
             op_mul,
@@ -36,14 +49,22 @@ impl Compiler {
         match value {
             Value::Int(value) => {
                 if value.is_zero() {
-                    self.allocator.null()
+                    self.nil
                 } else if value.is_one() {
-                    self.allocator.one()
+                    self.quote(self.op_q).unwrap()
                 } else {
-                    self.allocator.new_number(value).unwrap()
+                    let value = self.allocator.new_number(value).unwrap();
+                    self.quote(value).unwrap()
                 }
             }
-            Value::String(value) => self.allocator.new_atom(value.as_bytes()).unwrap(),
+            Value::String(value) => {
+                if value.is_empty() {
+                    self.nil
+                } else {
+                    let value = self.allocator.new_atom(value.as_bytes()).unwrap();
+                    self.quote(value).unwrap()
+                }
+            }
             Value::Add(args) => {
                 let mut list = vec![self.op_add];
                 for arg in args {
@@ -72,13 +93,56 @@ impl Compiler {
                 }
                 self.new_list(&list).unwrap()
             }
+            Value::Reference(index) => {
+                let mut path = 2;
+                for _ in 0..index {
+                    path *= 2;
+                    path += 1;
+                }
+                self.allocator.new_number(path.into()).unwrap()
+            }
+            Value::Environment(target, args) => {
+                let target = self.compile(target.as_ref().clone());
+                let target = self.quote(target).unwrap();
+                let args = args
+                    .into_iter()
+                    .map(|input| self.compile(input))
+                    .collect::<Vec<_>>();
+                let args = self.build_cons(&args, self.nil).unwrap();
+                self.new_list(&[self.op_a, target, args]).unwrap()
+            }
+            Value::Call(target, args) => {
+                let target = self.compile(target.as_ref().clone());
+                let args = args
+                    .into_iter()
+                    .map(|input| self.compile(input))
+                    .collect::<Vec<_>>();
+                let args = self.build_cons(&args, self.nil).unwrap();
+                self.new_list(&[self.op_a, target, args]).unwrap()
+            }
+            Value::Quote(value) => {
+                let value = self.compile(value.as_ref().clone());
+                self.quote(value).unwrap()
+            }
         }
     }
 
+    fn quote(&mut self, value: NodePtr) -> Result<NodePtr, EvalErr> {
+        self.allocator.new_pair(self.op_q, value)
+    }
+
     fn new_list(&mut self, values: &[NodePtr]) -> Result<NodePtr, EvalErr> {
-        let mut result = self.allocator.null();
+        let mut result = self.nil;
         for value in values.iter().rev() {
             result = self.allocator.new_pair(*value, result)?;
+        }
+        Ok(result)
+    }
+
+    fn build_cons(&mut self, values: &[NodePtr], terminator: NodePtr) -> Result<NodePtr, EvalErr> {
+        let mut result = terminator;
+        for value in values.iter().rev() {
+            result = self.new_list(&[self.op_c, *value, result])?;
         }
         Ok(result)
     }

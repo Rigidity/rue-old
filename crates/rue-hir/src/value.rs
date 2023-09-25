@@ -1,6 +1,6 @@
 use num_bigint::BigInt;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Value {
     Int(BigInt),
     String(String),
@@ -10,8 +10,8 @@ pub enum Value {
     Mul(Vec<Value>),
     Div(Vec<Value>),
 
-    Environment {
-        inputs: Vec<Value>,
-        output: Box<Value>,
-    },
+    Reference(usize),
+    Environment(Box<Value>, Vec<Value>),
+    Call(Box<Value>, Vec<Value>),
+    Quote(Box<Value>),
 }
