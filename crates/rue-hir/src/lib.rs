@@ -1,52 +1,57 @@
-use std::fmt;
+use std::collections::HashMap;
 
-use itertools::Itertools;
 use rue_ast::{BinaryExpr, Expr, Item, Program};
 use rue_syntax::SyntaxToken;
 
 mod error;
-mod lowerer;
+mod ty;
 mod value;
 
 pub use error::*;
-pub use lowerer::*;
 pub use value::*;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Type {
-    Int,
-    String,
-    Fn {
-        params: Vec<Type>,
-        return_ty: Box<Type>,
-    },
+use ty::{Type, TypedValue};
+
+struct Scope {
+    vars: HashMap<String, TypedValue>,
 }
 
-impl fmt::Display for Type {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Int => write!(f, "Int"),
-            Self::String => write!(f, "String"),
-            Self::Fn { params, return_ty } => {
-                write!(f, "fn({}) -> {return_ty}", params.iter().join(", "))
-            }
+impl Scope {
+    pub fn new() -> Self {
+        Self {
+            vars: HashMap::new(),
         }
     }
 }
 
-struct TypedValue {
-    ty: Type,
-    value: Value,
-}
-
-impl TypedValue {
-    pub fn new(ty: Type, value: Value) -> Self {
-        Self { ty, value }
-    }
+pub struct Lowerer {
+    errors: Vec<Error>,
+    scopes: Vec<Scope>,
 }
 
 impl Lowerer {
+    pub fn new() -> Self {
+        Self {
+            errors: Vec::new(),
+            scopes: vec![Scope::new()],
+        }
+    }
+
+    pub fn errors(self) -> Vec<Error> {
+        self.errors
+    }
+
+    /**
+     * Go through each item, and define its type in the current scope.
+     * Start on the entrypoint, and keep track of variables used in the current scope.
+     * Find which variables need to be captured into the scope.
+     * Build an environment containing everything which is referenced.
+     */
     pub fn lower_program(&mut self, program: Program) -> Option<Value> {
+        for item in program.items() {
+            let Item::Fn(item) = item;
+        }
+
         for item in program.items() {
             let Item::Fn(item) = item;
 
@@ -116,9 +121,9 @@ impl Lowerer {
 
         let value = match op_name {
             "+" => Value::Add(args),
-            "-" => Value::Subtract(args),
-            "*" => Value::Multiply(args),
-            "/" => Value::Divide(args),
+            "-" => Value::Sub(args),
+            "*" => Value::Mul(args),
+            "/" => Value::Div(args),
             "<" => todo!(),
             ">" => todo!(),
             _ => todo!(),

@@ -51,21 +51,21 @@ impl Compiler {
                 }
                 self.new_list(&list).unwrap()
             }
-            Value::Subtract(args) => {
+            Value::Sub(args) => {
                 let mut list = vec![self.op_sub];
                 for arg in args {
                     list.push(self.compile(arg));
                 }
                 self.new_list(&list).unwrap()
             }
-            Value::Multiply(args) => {
+            Value::Mul(args) => {
                 let mut list = vec![self.op_mul];
                 for arg in args {
                     list.push(self.compile(arg));
                 }
                 self.new_list(&list).unwrap()
             }
-            Value::Divide(args) => {
+            Value::Div(args) => {
                 let mut list = vec![self.op_div];
                 for arg in args {
                     list.push(self.compile(arg));

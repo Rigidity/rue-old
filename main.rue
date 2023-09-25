@@ -1,3 +1,7 @@
+fn some() -> Int {
+    42
+}
+
 fn main() -> Int {
-    3 * 2
+    some() * 2
 }
