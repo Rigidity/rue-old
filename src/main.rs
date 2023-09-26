@@ -4,7 +4,6 @@ use clvmr::{
     Allocator, ChiaDialect,
 };
 use rue_ast::Program;
-use rue_compiler::Compiler;
 use rue_hir::Lowerer;
 use rue_lexer::Lexer;
 use rue_parser::Parser;
@@ -34,21 +33,21 @@ fn main() {
     println!("{:?}", value);
     println!("Compiler errors: {:?}\n", lowerer.errors());
 
-    let bytes = Compiler::new().compile_to_bytes(value);
+    // let bytes = Compiler::new().compile_to_bytes(value);
 
-    println!("Compiled output: {}", hex::encode(&bytes));
+    // println!("Compiled output: {}", hex::encode(&bytes));
 
-    let mut a = Allocator::new();
-    let ptr = node_from_bytes(&mut a, &bytes).unwrap();
+    // let mut a = Allocator::new();
+    // let ptr = node_from_bytes(&mut a, &bytes).unwrap();
 
-    let dialect = ChiaDialect::new(0);
+    // let dialect = ChiaDialect::new(0);
 
-    let nil = a.null();
-    match clvmr::run_program(&mut a, &dialect, ptr, nil, u64::MAX) {
-        Ok(Reduction(cost, result)) => println!(
-            "Result is {} with cost {cost}",
-            hex::encode(node_to_bytes(&a, result).unwrap())
-        ),
-        Err(error) => println!("{error}"),
-    }
+    // let nil = a.null();
+    // match clvmr::run_program(&mut a, &dialect, ptr, nil, u64::MAX) {
+    //     Ok(Reduction(cost, result)) => println!(
+    //         "Result is {} with cost {cost}",
+    //         hex::encode(node_to_bytes(&a, result).unwrap())
+    //     ),
+    //     Err(error) => println!("{error}"),
+    // }
 }
