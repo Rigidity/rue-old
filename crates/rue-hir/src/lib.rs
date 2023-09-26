@@ -16,10 +16,46 @@ pub use symbol::*;
 
 use ty::Type;
 
-pub struct Lowerer {
+pub struct Database {
+    symbols: Arena<Symbol>,
+}
+
+impl Database {
+    fn new() -> Self {
+        Self {
+            symbols: Arena::new(),
+        }
+    }
+
+    pub fn symbol(&self, symbol_id: SymbolId) -> &Symbol {
+        &self.symbols[symbol_id]
+    }
+
+    pub fn symbol_mut(&mut self, symbol_id: SymbolId) -> &mut Symbol {
+        &mut self.symbols[symbol_id]
+    }
+}
+
+pub struct Output {
+    pub errors: Vec<Error>,
+    pub db: Database,
+    pub scope: Option<Scope>,
+}
+
+pub fn lower(program: Program) -> Output {
+    let mut lowerer = Lowerer::new();
+    let scope = lowerer.lower_program(program);
+    Output {
+        errors: lowerer.errors,
+        db: lowerer.db,
+        scope,
+    }
+}
+
+struct Lowerer {
     errors: Vec<Error>,
     scopes: Vec<Scope>,
-    symbols: Arena<Symbol>,
+    db: Database,
 }
 
 impl Lowerer {
@@ -27,16 +63,16 @@ impl Lowerer {
         Self {
             errors: Vec::new(),
             scopes: Vec::new(),
-            symbols: Arena::new(),
+            db: Database::new(),
         }
-    }
-
-    pub fn errors(self) -> Vec<Error> {
-        self.errors
     }
 
     pub fn lower_program(&mut self, program: Program) -> Option<Scope> {
         self.scopes.push(Scope::new());
+
+        self.scope_mut().bind_type("Int".to_string(), Type::Int);
+        self.scope_mut()
+            .bind_type("String".to_string(), Type::String);
 
         let symbol_ids = program
             .items()
@@ -44,18 +80,27 @@ impl Lowerer {
             .map(|item| self.define_item(item))
             .collect_vec();
 
+        let mut is_valid = true;
+
         for (i, item) in program.items().into_iter().enumerate() {
             let body = self.lower_item(item);
+            if body.is_none() {
+                is_valid = false;
+            }
 
             if let Some(symbol_id) = symbol_ids[i] {
-                match &mut self.symbols[symbol_id] {
+                match &mut self.db.symbols[symbol_id] {
                     Symbol::Function { resolved_body, .. } => *resolved_body = body,
                     _ => {}
                 }
             }
         }
 
-        self.scopes.pop()
+        if is_valid {
+            self.scopes.pop()
+        } else {
+            None
+        }
     }
 
     fn lower_item(&mut self, item: Item) -> Option<Hir> {
@@ -74,7 +119,8 @@ impl Lowerer {
         {
             if let Some(name_token) = param.name() {
                 let name = name_token.text().to_string();
-                let symbol = self.symbols.alloc(Symbol::Variable { ty: Type::Int });
+                let ty = self.lower_type(param.ty()?)?;
+                let symbol = self.db.symbols.alloc(Symbol::Variable { ty });
                 self.scope_mut().bind(name, symbol);
             }
         }
@@ -144,7 +190,7 @@ impl Lowerer {
 
         let hir = Hir::Symbol(symbol_id);
 
-        match &self.symbols[symbol_id] {
+        match self.db.symbol(symbol_id) {
             Symbol::Variable { ty } => Some((ty.clone(), hir)),
             Symbol::Function {
                 param_types,
@@ -284,6 +330,31 @@ impl Lowerer {
         ))
     }
 
+    fn lower_type(&mut self, ty: rue_ast::Type) -> Option<Type> {
+        match ty {
+            rue_ast::Type::Named(token) => self.lower_named_type(token),
+        }
+    }
+
+    fn lower_named_type(&mut self, token: SyntaxToken) -> Option<Type> {
+        let name = token.text();
+
+        let Some(ty) = self
+            .scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.lookup_type(name))
+        else {
+            self.errors.push(Error {
+                message: format!("undefined type `{name}`"),
+                span: token.text_range().into(),
+            });
+            return None;
+        };
+
+        Some(ty.clone())
+    }
+
     fn define_item(&mut self, item: Item) -> Option<SymbolId> {
         match item {
             Item::Fn(item) => self.define_fn_item(item),
@@ -302,9 +373,21 @@ impl Lowerer {
             return None;
         }
 
-        let symbol = self.symbols.alloc(Symbol::Function {
-            param_types: vec![],
-            return_type: Type::Int,
+        let mut param_types = Vec::new();
+
+        for param_type in item
+            .param_list()
+            .map(|list| list.params())
+            .unwrap_or_default()
+        {
+            param_types.push(self.lower_type(param_type.ty()?)?);
+        }
+
+        let return_type = self.lower_type(item.return_type()?)?;
+
+        let symbol = self.db.symbols.alloc(Symbol::Function {
+            param_types,
+            return_type,
             resolved_body: None,
         });
 

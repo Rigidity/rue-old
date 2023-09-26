@@ -1,0 +1,8 @@
+[package]
+name = "rue-lir"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+num-bigint = "0.4.3"
+rue-hir = { version = "0.1.0", path = "../rue-hir" }

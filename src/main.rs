@@ -1,10 +1,4 @@
-use clvmr::{
-    reduction::Reduction,
-    serde::{node_from_bytes, node_to_bytes},
-    Allocator, ChiaDialect,
-};
 use rue_ast::Program;
-use rue_hir::Lowerer;
 use rue_lexer::Lexer;
 use rue_parser::Parser;
 use rue_syntax::SyntaxNode;
@@ -27,11 +21,18 @@ fn main() {
     }
 
     let program = Program::cast(node).unwrap();
-    let mut lowerer = Lowerer::new();
-    let value = lowerer.lower_program(program).unwrap();
+    let rue_hir::Output { errors, db, scope } = rue_hir::lower(program);
 
-    println!("{:?}", value);
-    println!("Compiler errors: {:?}\n", lowerer.errors());
+    println!("{:?}", scope);
+    println!("Compiler errors: {:?}\n", errors);
+
+    if scope.is_none() {
+        return;
+    }
+
+    let lir = rue_lir::lower(db, scope.unwrap());
+
+    println!("{:?}", lir);
 
     // let bytes = Compiler::new().compile_to_bytes(value);
 

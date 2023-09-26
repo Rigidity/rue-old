@@ -894,6 +894,7 @@ dependencies = [
  "rue-compiler",
  "rue-hir",
  "rue-lexer",
+ "rue-lir",
  "rue-parser",
  "rue-syntax",
 ]
@@ -929,6 +930,14 @@ dependencies = [
 [[package]]
 name = "rue-lexer"
 version = "0.1.0"
+
+[[package]]
+name = "rue-lir"
+version = "0.1.0"
+dependencies = [
+ "num-bigint",
+ "rue-hir",
+]
 
 [[package]]
 name = "rue-lsp"
