@@ -9,8 +9,11 @@ pub enum Value {
     Sub(Vec<Value>),
     Mul(Vec<Value>),
     Div(Vec<Value>),
+    GreaterThan(Box<Value>, Box<Value>),
+    LessThan(Box<Value>, Box<Value>),
 
     Reference(usize),
     Call(Box<Value>, Vec<Value>),
     Quote(Box<Value>),
+    If(Box<Value>, Box<Value>, Box<Value>),
 }

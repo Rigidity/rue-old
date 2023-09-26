@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use indexmap::IndexSet;
 use itertools::Itertools;
 use la_arena::{Arena, Idx};
-use rue_ast::{BinaryExpr, CallExpr, Expr, FnItem, Item, Program};
+use rue_ast::{BinaryExpr, Block, CallExpr, Expr, FnItem, IfExpr, Item, Program};
 use rue_syntax::SyntaxToken;
 
 mod error;
@@ -116,14 +116,17 @@ impl Lowerer {
             self.scope_mut().used.insert(var_id);
         }
 
-        let expr = item.block()?.expr()?;
-
-        let result = self
-            .lower_expr(expr)
+        let result = item
+            .block()
+            .and_then(|block| self.lower_block(block))
             .map(|typed| Value::Quote(Box::new(typed.value)));
         self.scopes.pop();
 
         result
+    }
+
+    fn lower_block(&mut self, block: Block) -> Option<TypedValue> {
+        self.lower_expr(block.expr()?)
     }
 
     fn lower_expr(&mut self, expr: Expr) -> Option<TypedValue> {
@@ -134,7 +137,7 @@ impl Lowerer {
             Expr::Binary(expr) => self.lower_binary_expr(expr),
             Expr::Prefix(_expr) => todo!(),
             Expr::Call(expr) => self.lower_call_expr(expr),
-            Expr::If(_expr) => todo!(),
+            Expr::If(expr) => self.lower_if_expr(expr),
         }
     }
 
@@ -214,15 +217,13 @@ impl Lowerer {
             return None;
         }
 
-        let args = vec![lhs.value, rhs.value];
-
         let value = match op_name {
-            "+" => Value::Add(args),
-            "-" => Value::Sub(args),
-            "*" => Value::Mul(args),
-            "/" => Value::Div(args),
-            "<" => todo!(),
-            ">" => todo!(),
+            "+" => Value::Add(vec![lhs.value, rhs.value]),
+            "-" => Value::Sub(vec![lhs.value, rhs.value]),
+            "*" => Value::Mul(vec![lhs.value, rhs.value]),
+            "/" => Value::Div(vec![lhs.value, rhs.value]),
+            "<" => Value::LessThan(Box::new(lhs.value), Box::new(rhs.value)),
+            ">" => Value::GreaterThan(Box::new(lhs.value), Box::new(rhs.value)),
             _ => todo!(),
         };
 
@@ -253,6 +254,20 @@ impl Lowerer {
             Value::Call(
                 Box::new(target.value),
                 args.into_iter().map(|typed| typed.value).collect_vec(),
+            ),
+        ))
+    }
+
+    fn lower_if_expr(&mut self, expr: IfExpr) -> Option<TypedValue> {
+        let condition = self.lower_expr(expr.condition()?)?;
+        let then_block = self.lower_block(expr.then_block()?)?;
+        let else_block = self.lower_block(expr.else_block()?)?;
+        Some(TypedValue::new(
+            then_block.ty,
+            Value::If(
+                Box::new(condition.value),
+                Box::new(then_block.value),
+                Box::new(else_block.value),
             ),
         ))
     }
