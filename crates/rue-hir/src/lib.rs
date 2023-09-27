@@ -59,7 +59,7 @@ struct Lowerer {
 }
 
 impl Lowerer {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self {
             errors: Vec::new(),
             scopes: Vec::new(),
@@ -67,8 +67,8 @@ impl Lowerer {
         }
     }
 
-    pub fn lower_program(&mut self, program: Program) -> Option<Scope> {
-        self.scopes.push(Scope::new());
+    fn lower_program(&mut self, program: Program) -> Option<Scope> {
+        self.scopes.push(Scope::default());
 
         self.scope_mut().bind_type("Int".to_string(), Type::Int);
         self.scope_mut()
@@ -83,16 +83,9 @@ impl Lowerer {
         let mut is_valid = true;
 
         for (i, item) in program.items().into_iter().enumerate() {
-            let body = self.lower_item(item);
+            let body = self.lower_item(item, symbol_ids[i]);
             if body.is_none() {
                 is_valid = false;
-            }
-
-            if let Some(symbol_id) = symbol_ids[i] {
-                match &mut self.db.symbols[symbol_id] {
-                    Symbol::Function { resolved_body, .. } => *resolved_body = body,
-                    _ => {}
-                }
             }
         }
 
@@ -103,14 +96,14 @@ impl Lowerer {
         }
     }
 
-    fn lower_item(&mut self, item: Item) -> Option<Hir> {
+    fn lower_item(&mut self, item: Item, symbol_id: Option<SymbolId>) -> Option<()> {
         match item {
-            Item::Fn(item) => self.lower_fn_item(item),
+            Item::Fn(item) => self.lower_fn_item(item, symbol_id),
         }
     }
 
-    fn lower_fn_item(&mut self, item: FnItem) -> Option<Hir> {
-        self.scopes.push(Scope::new());
+    fn lower_fn_item(&mut self, item: FnItem, symbol_id: Option<SymbolId>) -> Option<()> {
+        let mut scope = Scope::default();
 
         for param in item
             .param_list()
@@ -121,16 +114,25 @@ impl Lowerer {
                 let name = name_token.text().to_string();
                 let ty = self.lower_type(param.ty()?)?;
                 let symbol = self.db.symbols.alloc(Symbol::Variable { ty });
-                self.scope_mut().bind(name, symbol);
+                scope.bind(name, symbol);
             }
         }
 
+        self.scopes.push(scope);
         let block = item.block().and_then(|block| self.lower_block(block));
-
-        self.scopes.pop();
+        let scope = self.scopes.pop().unwrap();
 
         // todo: handle type checking
-        block.map(|(_ty, hir)| hir)
+        if let Some(hir) = block.map(|(_ty, hir)| hir) {
+            if let Some(symbol_id) = symbol_id {
+                if let Symbol::Function { resolved_body, .. } = &mut self.db.symbols[symbol_id] {
+                    *resolved_body = Some((hir, scope));
+                }
+            }
+            Some(())
+        } else {
+            None
+        }
     }
 
     fn lower_block(&mut self, block: Block) -> Option<(Type, Hir)> {

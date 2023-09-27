@@ -913,7 +913,7 @@ dependencies = [
  "clvmr",
  "num-bigint",
  "num-traits",
- "rue-hir",
+ "rue-lir",
 ]
 
 [[package]]

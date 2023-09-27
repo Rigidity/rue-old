@@ -1,11 +1,3 @@
-fn factorial(num: Int) -> Int {
-    if num > 1 { // `num` added to used symbols, reference inserted
-        num * factorial(num - 1) // `factorial` added to used symbols, reference inserted
-    } else {
-        1
-    }
-}
-
 fn main() -> Int {
-    factorial(5) // `factorial` added to used symbols, reference inserted
+    42
 }

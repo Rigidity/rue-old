@@ -7,4 +7,4 @@ edition = "2021"
 clvmr = "0.3.0"
 num-bigint = "0.4.3"
 num-traits = "0.2.15"
-rue-hir = { version = "0.1.0", path = "../rue-hir" }
+rue-lir = { version = "0.1.0", path = "../rue-lir" }
