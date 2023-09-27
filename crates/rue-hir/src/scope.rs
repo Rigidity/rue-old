@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{ty::Type, SymbolId};
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Scope {
     symbols: HashMap<String, SymbolId>,
     types: HashMap<String, Type>,
