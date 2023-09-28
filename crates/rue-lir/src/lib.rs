@@ -1,4 +1,4 @@
-use indexmap::{IndexMap, IndexSet};
+use indexmap::IndexMap;
 use num_bigint::BigInt;
 use rue_hir::{BinOp, Database, Hir, Scope, Symbol, SymbolId};
 
@@ -26,15 +26,22 @@ impl Lowerer {
 
     fn build_environment(&mut self) -> Vec<Lir> {
         let mut lowered = IndexMap::new();
-        for symbol_id in self.scope().definitions().clone() {
+
+        for symbol_id in self.scope().defined_symbols() {
             match self.db.symbol(symbol_id) {
                 Symbol::Parameter { .. } => {}
                 Symbol::Variable { value, .. } => {
                     lowered.insert(symbol_id, self.lower_hir(&value.clone()));
                 }
-                Symbol::Function { resolved_body, .. } => {
-                    let body = resolved_body.as_ref().unwrap();
-                    let value = self.lower_function(body.0.clone(), body.1.clone());
+                Symbol::Function {
+                    resolved_body,
+                    scope,
+                    ..
+                } => {
+                    let value = self.lower_function(
+                        resolved_body.as_ref().unwrap().clone(),
+                        scope.as_ref().unwrap().clone(),
+                    );
                     lowered.insert(symbol_id, Lir::Quote(Box::new(value)));
                 }
             }
@@ -42,17 +49,19 @@ impl Lowerer {
 
         let scope = self.scopes.pop().unwrap();
 
-        let mut captures = Vec::new();
-        for symbol_id in used {
-            if scope.is_defined(symbol_id) {
-                if let Some(value) = lowered.remove(&symbol_id) {
-                    captures.push(value);
-                }
-            } else {
-                captures.push(self.capture_symbol(symbol_id));
-            }
+        let mut environment = Vec::new();
+        let mut path = 2;
+
+        for symbol_id in scope.captured_symbols() {
+            environment.push(Lir::Path(path));
+            path = path * 2 + 1;
         }
-        captures
+
+        for value in lowered.into_values() {
+            environment.push(value);
+        }
+
+        environment
     }
 
     fn lower_main(mut self) -> Option<Lir> {
@@ -110,7 +119,7 @@ impl Lowerer {
     }
 
     fn lower_symbol(&mut self, symbol_id: SymbolId) -> Lir {
-        self.capture_symbol(symbol_id)
+        Lir::Path(2)
     }
 
     fn lower_bin_op(&mut self, op: BinOp, lhs: &Hir, rhs: &Hir) -> Lir {
@@ -135,7 +144,7 @@ impl Lowerer {
                 let mut environment = Vec::new();
 
                 for capture in scope.captured_symbols() {
-                    environment.push(self.capture_symbol(capture));
+                    environment.push(Lir::Path(2));
                 }
 
                 for argument in arguments {
@@ -175,6 +184,6 @@ impl Lowerer {
     }
 
     fn scope_mut(&mut self) -> &mut Scope {
-        &mut self.scopes.last_mut().unwrap()
+        self.scopes.last_mut().unwrap()
     }
 }

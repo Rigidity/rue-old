@@ -20,6 +20,10 @@ impl Scope {
         self.defined_symbols.push(symbol_id);
     }
 
+    pub fn defined_symbols(&self) -> Vec<SymbolId> {
+        self.defined_symbols.clone()
+    }
+
     pub fn captured_symbols(&self) -> Vec<SymbolId> {
         self.used_symbols
             .iter()
