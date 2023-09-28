@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use indexmap::IndexMap;
+use itertools::Itertools;
 use num_bigint::BigInt;
 use rue_hir::{BinOp, Database, Hir, Scope, Symbol, SymbolId};
 
@@ -12,16 +15,18 @@ pub fn lower(db: Database, scope: Scope) -> Option<Lir> {
 }
 
 struct Lowerer {
-    scopes: Vec<Scope>,
+    scopes: Vec<(Scope, IndexMap<SymbolId, Lir>)>,
     db: Database,
 }
 
 impl Lowerer {
     fn new(db: Database, scope: Scope) -> Self {
-        Self {
-            scopes: vec![scope],
+        let mut result = Self {
+            scopes: Vec::new(),
             db,
-        }
+        };
+        result.push_scope(scope);
+        result
     }
 
     fn build_environment(&mut self) -> Vec<Lir> {
@@ -47,15 +52,9 @@ impl Lowerer {
             }
         }
 
-        let scope = self.scopes.pop().unwrap();
+        let (scope, _) = self.scopes.pop().unwrap();
 
         let mut environment = Vec::new();
-        let mut path = 2;
-
-        for _ in scope.captured_symbols() {
-            environment.push(Lir::Path(path));
-            path = path * 2 + 1;
-        }
 
         for (symbol_id, value) in lowered {
             if scope.used_symbols().contains(&symbol_id) {
@@ -87,13 +86,13 @@ impl Lowerer {
     }
 
     fn lower_function(&mut self, body: Hir, scope: Scope) -> Lir {
-        self.scopes.push(scope);
+        self.push_scope(scope);
         let body = self.lower_hir(&body);
 
         Lir::Environment {
             value: Box::new(Lir::Quote(Box::new(body))),
             arguments: self.build_environment(),
-            rest: None,
+            rest: Some(Box::new(Lir::Path(1))),
         }
     }
 
@@ -121,54 +120,7 @@ impl Lowerer {
     }
 
     fn lower_symbol(&mut self, symbol_id: SymbolId) -> Lir {
-        match self.db.symbol(symbol_id) {
-            Symbol::Parameter { index, .. }
-                if self.scope().defined_symbols().contains(&symbol_id) =>
-            {
-                let mut path = 2;
-
-                for _ in self.scope().captured_symbols() {
-                    path = path * 2 + 1;
-                }
-
-                for defined_symbol in self.scope().defined_symbols() {
-                    if matches!(self.db.symbol(*defined_symbol), Symbol::Parameter { .. }) {
-                        continue;
-                    }
-                    if self.scope().used_symbols().contains(defined_symbol) {
-                        path = path * 2 + 1;
-                    }
-                }
-
-                (0..*index).for_each(|_| path = path * 2 + 1);
-
-                Lir::Path(path)
-            }
-            _ => {
-                let mut path = 2;
-
-                for captured_symbol in self.scope().captured_symbols() {
-                    if captured_symbol == symbol_id {
-                        return Lir::Path(path);
-                    }
-                    path = path * 2 + 1;
-                }
-
-                for defined_symbol in self.scope().defined_symbols() {
-                    if self.scope().used_symbols().contains(defined_symbol) {
-                        if matches!(self.db.symbol(*defined_symbol), Symbol::Parameter { .. }) {
-                            continue;
-                        }
-                        if defined_symbol == &symbol_id {
-                            return Lir::Path(path);
-                        }
-                        path = path * 2 + 1;
-                    }
-                }
-
-                unreachable!();
-            }
-        }
+        self.symbol_table().get(&symbol_id).unwrap().clone()
     }
 
     fn lower_bin_op(&mut self, op: BinOp, lhs: &Hir, rhs: &Hir) -> Lir {
@@ -229,10 +181,40 @@ impl Lowerer {
     }
 
     fn scope(&self) -> &Scope {
-        &self.scopes.last().unwrap()
+        &self.scopes.last().unwrap().0
     }
 
-    fn scope_mut(&mut self) -> &mut Scope {
-        self.scopes.last_mut().unwrap()
+    fn symbol_table(&self) -> &IndexMap<SymbolId, Lir> {
+        &self.scopes.last().unwrap().1
+    }
+
+    fn push_scope(&mut self, scope: Scope) {
+        let mut symbol_table = IndexMap::new();
+        let mut path = 2;
+
+        for captured_symbol in scope.captured_symbols() {
+            symbol_table.insert(captured_symbol, Lir::Path(path));
+            path = path * 2 + 1;
+        }
+
+        let mut parameters = HashMap::new();
+
+        for defined_symbol in scope.defined_symbols() {
+            if scope.used_symbols().contains(defined_symbol) {
+                if let Symbol::Parameter { index, .. } = self.db.symbol(*defined_symbol) {
+                    parameters.insert(*index, *defined_symbol);
+                } else {
+                    symbol_table.insert(*defined_symbol, Lir::Path(path));
+                    path = path * 2 + 1;
+                }
+            }
+        }
+
+        for index in parameters.keys().sorted() {
+            symbol_table.insert(*parameters.get(index).unwrap(), Lir::Path(path));
+            path = path * 2 + 1;
+        }
+
+        self.scopes.push((scope, symbol_table));
     }
 }

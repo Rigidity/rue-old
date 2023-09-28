@@ -6,11 +6,6 @@ fn factorial(num: Int) -> Int {
     }
 }
 
-// factorial(factorial, num)
-// call with captures then arguments
-// environment is captures in order of usage, followed by parameters
-// need to know all of the captures after HIR is created
-
 fn main() -> Int {
     factorial(5)
 }

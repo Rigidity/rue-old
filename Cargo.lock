@@ -953,6 +953,7 @@ name = "rue-lir"
 version = "0.1.0"
 dependencies = [
  "indexmap",
+ "itertools",
  "num-bigint",
  "rue-hir",
 ]
