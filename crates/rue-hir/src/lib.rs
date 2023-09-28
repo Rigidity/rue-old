@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use itertools::Itertools;
 use la_arena::Arena;
 use rue_ast::{BinaryExpr, Block, CallExpr, Expr, FnItem, IfExpr, Item, Program};
@@ -158,13 +160,10 @@ impl Lowerer {
         let text = token.text();
         match text.parse() {
             Ok(value) => Some((Type::Int, Hir::Int(value))),
-            Err(error) => {
-                self.errors.push(Error {
-                    message: format!("invalid integer literal `{text}` ({error})"),
-                    span: token.text_range().into(),
-                });
-                None
-            }
+            Err(error) => self.error(
+                format!("invalid integer literal `{text}` ({error})"),
+                token.text_range(),
+            ),
         }
     }
 
@@ -186,11 +185,7 @@ impl Lowerer {
             .rev()
             .find_map(|scope| scope.lookup(name))
         else {
-            self.errors.push(Error {
-                message: format!("undefined variable `{name}`"),
-                span: token.text_range().into(),
-            });
-            return None;
+            return self.error(format!("undefined variable `{name}`"), token.text_range());
         };
 
         if !self.scope().is_defined(symbol_id) {
@@ -226,14 +221,13 @@ impl Lowerer {
         let rhs = self.lower_expr(expr.rhs()?)?;
 
         if lhs.0 != Type::Int || rhs.0 != Type::Int {
-            self.errors.push(Error {
-                message: format!(
+            return self.error(
+                format!(
                     "cannot apply operator `{op_name}` to values of type `{}` and `{}`",
                     lhs.0, rhs.0
                 ),
-                span: op.text_range().into(),
-            });
-            return None;
+                op.text_range(),
+            );
         }
 
         let op = match op_name {
@@ -269,26 +263,24 @@ impl Lowerer {
             return_type,
         } = target.0
         else {
-            self.errors.push(Error {
-                message: format!(
+            return self.error(
+                format!(
                     "expected callable function, found value of type `{}`",
                     target.0
                 ),
-                span: expr.0.text_range().into(),
-            });
-            return None;
+                expr.0.text_range(),
+            );
         };
 
         if args.len() != param_types.len() {
-            self.errors.push(Error {
-                message: format!(
+            return self.error(
+                format!(
                     "expected {} arguments, but was given {}",
                     param_types.len(),
                     args.len()
                 ),
-                span: expr.0.text_range().into(),
-            });
-            return None;
+                expr.0.text_range(),
+            );
         }
 
         let mut arg_hirs = Vec::new();
@@ -297,11 +289,10 @@ impl Lowerer {
             let ty = &param_types[i];
 
             if !arg.0.is_assignable_to(ty) {
-                self.errors.push(Error {
-                    message: format!("expected argument of type `{}`, but found `{}`", ty, arg.0),
-                    span: expr.0.text_range().into(),
-                });
-                return None;
+                return self.error(
+                    format!("expected argument of type `{}`, but found `{}`", ty, arg.0),
+                    expr.0.text_range(),
+                );
             }
 
             arg_hirs.push(arg.1.clone());
@@ -322,14 +313,13 @@ impl Lowerer {
         let else_block = self.lower_block(expr.else_block()?)?;
 
         if then_block.0 != else_block.0 {
-            self.errors.push(Error {
-                message: format!(
+            return self.error(
+                format!(
                     "then branch has type `{}`, but else branch has differing type `{}`",
                     then_block.0, else_block.0
                 ),
-                span: expr.0.text_range().into(),
-            });
-            return None;
+                expr.0.text_range(),
+            );
         }
 
         Some((
@@ -357,11 +347,7 @@ impl Lowerer {
             .rev()
             .find_map(|scope| scope.lookup_type(name))
         else {
-            self.errors.push(Error {
-                message: format!("undefined type `{name}`"),
-                span: token.text_range().into(),
-            });
-            return None;
+            return self.error(format!("undefined type `{name}`"), token.text_range());
         };
 
         Some(ty.clone())
@@ -377,12 +363,11 @@ impl Lowerer {
         let name_token = item.name()?;
         let name = name_token.text().to_string();
 
-        if self.scope().lookup(&name).is_some() {
-            self.errors.push(Error {
-                message: format!("there is already a variable named `{name}`"),
-                span: name_token.text_range().into(),
-            });
-            return None;
+        if self.scope().lookup_name(&name).is_some() {
+            return self.error(
+                format!("there is already a variable named `{name}`"),
+                name_token.text_range(),
+            );
         }
 
         let mut param_types = Vec::new();
@@ -416,5 +401,13 @@ impl Lowerer {
 
     fn scope_mut(&mut self) -> &mut Scope {
         self.scopes.last_mut().unwrap()
+    }
+
+    fn error<T>(&mut self, message: String, range: impl Into<Range<usize>>) -> Option<T> {
+        self.errors.push(Error {
+            message,
+            span: range.into(),
+        });
+        None
     }
 }

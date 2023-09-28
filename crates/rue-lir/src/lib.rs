@@ -32,7 +32,7 @@ pub fn lower(db: Database, scope: Scope) -> Option<Lir> {
 }
 
 struct Lowerer {
-    scopes: Vec<(Scope, IndexSet<SymbolId>)>,
+    scopes: Vec<Scope>,
     db: Database,
 }
 
