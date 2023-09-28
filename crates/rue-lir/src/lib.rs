@@ -2,29 +2,9 @@ use indexmap::{IndexMap, IndexSet};
 use num_bigint::BigInt;
 use rue_hir::{BinOp, Database, Hir, Scope, Symbol, SymbolId};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Lir {
-    Int(BigInt),
-    String(String),
-    Path(usize),
-    Add(Vec<Lir>),
-    Sub(Vec<Lir>),
-    Mul(Vec<Lir>),
-    Div(Vec<Lir>),
-    Lt(Box<Lir>, Box<Lir>),
-    Gt(Box<Lir>, Box<Lir>),
-    Environment {
-        value: Box<Lir>,
-        arguments: Vec<Lir>,
-        rest: Option<Box<Lir>>,
-    },
-    If {
-        condition: Box<Lir>,
-        then_branch: Box<Lir>,
-        else_branch: Box<Lir>,
-    },
-    Quote(Box<Lir>),
-}
+mod lir;
+
+pub use lir::*;
 
 pub fn lower(db: Database, scope: Scope) -> Option<Lir> {
     let lowerer = Lowerer::new(db, scope);
@@ -39,7 +19,7 @@ struct Lowerer {
 impl Lowerer {
     fn new(db: Database, scope: Scope) -> Self {
         Self {
-            scopes: vec![(scope, IndexSet::new())],
+            scopes: vec![scope],
             db,
         }
     }
@@ -60,7 +40,7 @@ impl Lowerer {
             }
         }
 
-        let (scope, used) = self.scopes.pop().unwrap();
+        let scope = self.scopes.pop().unwrap();
 
         let mut captures = Vec::new();
         for symbol_id in used {
@@ -76,12 +56,15 @@ impl Lowerer {
     }
 
     fn lower_main(mut self) -> Option<Lir> {
-        let main = self.scope().lookup("main")?;
+        let main = self.scope().lookup_symbol("main")?;
 
-        if let Symbol::Function { resolved_body, .. } = self.db.symbol(main) {
-            let (body, scope) = resolved_body.as_ref().unwrap().clone();
-            let body = self.lower_function(body, scope);
-
+        if let Symbol::Function {
+            resolved_body: Some(resolved_body),
+            scope: Some(scope),
+            ..
+        } = self.db.symbol(main)
+        {
+            let body = self.lower_function(resolved_body.clone(), scope.clone());
             Some(Lir::Environment {
                 value: Box::new(Lir::Quote(Box::new(body))),
                 arguments: self.build_environment(),
@@ -93,7 +76,7 @@ impl Lowerer {
     }
 
     fn lower_function(&mut self, body: Hir, scope: Scope) -> Lir {
-        self.scopes.push((scope, IndexSet::new()));
+        self.scopes.push(scope);
         let body = self.lower_hir(&body);
 
         Lir::Environment {
@@ -145,24 +128,25 @@ impl Lowerer {
 
     fn lower_call(&mut self, value: &Hir, arguments: &[Hir]) -> Lir {
         if let Hir::Symbol(symbol_id) = value {
-            if let Symbol::Function { resolved_body, .. } = self.db.symbol(*symbol_id) {
-                if let Some((_, scope)) = resolved_body {
-                    let mut environment = Vec::new();
+            if let Symbol::Function {
+                scope: Some(scope), ..
+            } = self.db.symbol(*symbol_id)
+            {
+                let mut environment = Vec::new();
 
-                    for capture in scope.captures().clone() {
-                        environment.push(self.capture_symbol(capture));
-                    }
-
-                    for argument in arguments {
-                        environment.push(self.lower_hir(argument));
-                    }
-
-                    return Lir::Environment {
-                        value: Box::new(self.lower_hir(value)),
-                        arguments: environment,
-                        rest: None,
-                    };
+                for capture in scope.captured_symbols() {
+                    environment.push(self.capture_symbol(capture));
                 }
+
+                for argument in arguments {
+                    environment.push(self.lower_hir(argument));
+                }
+
+                return Lir::Environment {
+                    value: Box::new(self.lower_hir(value)),
+                    arguments: environment,
+                    rest: None,
+                };
             }
         }
         Lir::Environment {
@@ -186,26 +170,11 @@ impl Lowerer {
         }
     }
 
-    fn capture_symbol(&mut self, symbol_id: SymbolId) -> Lir {
-        let (index, _) = self.used_mut().insert_full(symbol_id);
-        let mut path = 2;
-        (0..index).for_each(|_| path = path * 2 + 1);
-        Lir::Path(path)
-    }
-
     fn scope(&self) -> &Scope {
-        &self.scopes.last().unwrap().0
+        &self.scopes.last().unwrap()
     }
 
     fn scope_mut(&mut self) -> &mut Scope {
-        &mut self.scopes.last_mut().unwrap().0
-    }
-
-    fn used(&self) -> &IndexSet<SymbolId> {
-        &self.scopes.last().unwrap().1
-    }
-
-    fn used_mut(&mut self) -> &mut IndexSet<SymbolId> {
-        &mut self.scopes.last_mut().unwrap().1
+        &mut self.scopes.last_mut().unwrap()
     }
 }

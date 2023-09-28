@@ -1,58 +1,42 @@
 use std::collections::HashMap;
 
-use crate::SymbolId;
+use crate::{ty::Type, SymbolId};
 
 #[derive(Debug, Clone, Default)]
 pub struct Scope {
-    resolved_names: HashMap<String, SymbolId>,
-    // types: HashMap<String, Type>,
-    // definitions: IndexSet<SymbolId>,
-    // captures: IndexSet<SymbolId>,
-    // used: IndexSet<SymbolId>,
+    named_symbols: HashMap<String, SymbolId>,
+    named_types: HashMap<String, Type>,
+    defined_symbols: Vec<SymbolId>,
+    used_symbols: Vec<SymbolId>,
 }
 
 impl Scope {
-    pub fn lookup_name(&self, name: &str) -> Option<SymbolId> {
-        self.resolved_names.get(name).copied()
+    pub fn lookup_symbol(&self, name: &str) -> Option<SymbolId> {
+        self.named_symbols.get(name).copied()
     }
 
-    pub fn bind_name(&mut self, name: String, symbol_id: SymbolId) {
-        self.resolved_names.insert(name, symbol_id);
+    pub fn define_symbol(&mut self, name: String, symbol_id: SymbolId) {
+        self.named_symbols.insert(name, symbol_id);
+        self.defined_symbols.push(symbol_id);
     }
 
-    // pub fn lookup_type(&self, name: &str) -> Option<&Type> {
-    //     self.types.get(name)
-    // }
+    pub fn captured_symbols(&self) -> Vec<SymbolId> {
+        self.used_symbols
+            .iter()
+            .filter(|symbol_id| !self.defined_symbols.contains(symbol_id))
+            .copied()
+            .collect()
+    }
 
-    // pub fn bind_type(&mut self, name: String, ty: Type) {
-    //     self.types.insert(name, ty);
-    // }
+    pub fn lookup_type(&self, name: &str) -> Option<&Type> {
+        self.named_types.get(name)
+    }
 
-    // pub fn capture(&mut self, symbol_id: SymbolId) {
-    //     self.captures.insert(symbol_id);
-    // }
+    pub fn define_type(&mut self, name: String, ty: Type) {
+        self.named_types.insert(name, ty);
+    }
 
-    // pub fn captures(&self) -> &IndexSet<SymbolId> {
-    //     &self.captures
-    // }
-
-    // pub fn define(&mut self, symbol_id: SymbolId) {
-    //     self.definitions.insert(symbol_id);
-    // }
-
-    // pub fn is_defined(&self, symbol_id: SymbolId) -> bool {
-    //     self.definitions.contains(&symbol_id)
-    // }
-
-    // pub fn definitions(&self) -> &IndexSet<SymbolId> {
-    //     &self.definitions
-    // }
-
-    // pub fn set_used(&mut self, symbol_id: SymbolId) {
-    //     self.used.insert(symbol_id);
-    // }
-
-    // pub fn used(&self) -> &IndexSet<SymbolId> {
-    //     &self.used
-    // }
+    pub fn mark_used(&mut self, symbol_id: SymbolId) {
+        self.used_symbols.push(symbol_id);
+    }
 }

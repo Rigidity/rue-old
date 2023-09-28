@@ -1,42 +1,23 @@
 use std::ops::Range;
 
 use itertools::Itertools;
-use la_arena::Arena;
 use rue_ast::{BinaryExpr, Block, CallExpr, Expr, FnItem, IfExpr, Item, Program};
 use rue_syntax::SyntaxToken;
 
+mod database;
 mod error;
 mod hir;
 mod scope;
 mod symbol;
 mod ty;
 
+pub use database::*;
 pub use error::*;
 pub use hir::*;
 pub use scope::*;
 pub use symbol::*;
 
 use ty::Type;
-
-pub struct Database {
-    symbols: Arena<Symbol>,
-}
-
-impl Database {
-    fn new() -> Self {
-        Self {
-            symbols: Arena::new(),
-        }
-    }
-
-    pub fn symbol(&self, symbol_id: SymbolId) -> &Symbol {
-        &self.symbols[symbol_id]
-    }
-
-    pub fn symbol_mut(&mut self, symbol_id: SymbolId) -> &mut Symbol {
-        &mut self.symbols[symbol_id]
-    }
-}
 
 pub struct Output {
     pub errors: Vec<Error>,
@@ -55,26 +36,25 @@ pub fn lower(program: Program) -> Output {
 }
 
 struct Lowerer {
-    errors: Vec<Error>,
-    scopes: Vec<Scope>,
     db: Database,
+    scopes: Vec<Scope>,
+    errors: Vec<Error>,
 }
 
 impl Lowerer {
     fn new() -> Self {
         Self {
-            errors: Vec::new(),
-            scopes: Vec::new(),
             db: Database::new(),
+            scopes: Vec::new(),
+            errors: Vec::new(),
         }
     }
 
     fn lower_program(&mut self, program: Program) -> Option<Scope> {
-        self.scopes.push(Scope::default());
-
-        self.scope_mut().bind_type("Int".to_string(), Type::Int);
-        self.scope_mut()
-            .bind_type("String".to_string(), Type::String);
+        let mut scope = Scope::default();
+        scope.define_type("Int".into(), Type::Int);
+        scope.define_type("String".into(), Type::String);
+        self.scopes.push(scope);
 
         let symbol_ids = program
             .items()
@@ -83,19 +63,13 @@ impl Lowerer {
             .collect_vec();
 
         let mut is_valid = true;
-
         for (i, item) in program.items().into_iter().enumerate() {
-            let body = self.lower_item(item, symbol_ids[i]);
-            if body.is_none() {
+            if self.lower_item(item, symbol_ids[i]).is_none() {
                 is_valid = false;
             }
         }
 
-        if is_valid {
-            self.scopes.pop()
-        } else {
-            None
-        }
+        is_valid.then(|| self.scopes.pop().unwrap())
     }
 
     fn lower_item(&mut self, item: Item, symbol_id: Option<SymbolId>) -> Option<()> {
@@ -117,27 +91,39 @@ impl Lowerer {
             if let Some(name_token) = param.name() {
                 let name = name_token.text().to_string();
                 let ty = self.lower_type(param.ty()?)?;
-                let symbol = self.db.symbols.alloc(Symbol::Parameter { ty, index });
-                scope.define(symbol);
-                scope.bind(name, symbol);
+                let symbol_id = self.db.new_symbol(Symbol::Parameter { ty, index });
+                scope.define_symbol(name, symbol_id);
             }
         }
 
         self.scopes.push(scope);
         let block = item.block().and_then(|block| self.lower_block(block));
-        let scope = self.scopes.pop().unwrap();
 
-        // todo: handle type checking
-        if let Some(hir) = block.map(|(_ty, hir)| hir) {
-            if let Some(symbol_id) = symbol_id {
-                if let Symbol::Function { resolved_body, .. } = &mut self.db.symbols[symbol_id] {
-                    *resolved_body = Some((hir, scope));
+        symbol_id.and_then(|symbol_id| {
+            block.and_then(|(ty, hir)| {
+                let mut error = None;
+
+                if let Symbol::Function {
+                    return_type,
+                    resolved_body,
+                    scope,
+                    ..
+                } = &mut self.db.symbol_mut(symbol_id)
+                {
+                    if !ty.is_assignable_to(return_type) {
+                        error = Some(format!("cannot return value of type `{ty}`, function has return type `{return_type}`"));
+                    }
+                    *resolved_body = Some(hir);
+                    *scope = self.scopes.pop();
                 }
-            }
-            Some(())
-        } else {
-            None
-        }
+
+                if let Some(error) = error {
+                    self.error(error, item.0.text_range())
+                } else {
+                    Some(())
+                }
+            })
+        })
     }
 
     fn lower_block(&mut self, block: Block) -> Option<(Type, Hir)> {
@@ -179,38 +165,29 @@ impl Lowerer {
     fn lower_ident_expr(&mut self, token: SyntaxToken) -> Option<(Type, Hir)> {
         let name = token.text();
 
-        let Some(symbol_id) = self
-            .scopes
-            .iter()
-            .rev()
-            .find_map(|scope| scope.lookup(name))
-        else {
+        let Some(symbol_id) = self.resolve_name(name) else {
             return self.error(format!("undefined variable `{name}`"), token.text_range());
         };
 
-        if !self.scope().is_defined(symbol_id) {
-            self.scope_mut().capture(symbol_id);
-        }
-
-        self.scope_mut().set_used(symbol_id);
+        self.scope_mut().mark_used(symbol_id);
 
         let hir = Hir::Symbol(symbol_id);
 
-        match self.db.symbol(symbol_id) {
-            Symbol::Variable { ty, .. } => Some((ty.clone(), hir)),
-            Symbol::Parameter { ty, .. } => Some((ty.clone(), hir)),
+        Some(match self.db.symbol(symbol_id) {
+            Symbol::Variable { ty, .. } => (ty.clone(), hir),
+            Symbol::Parameter { ty, .. } => (ty.clone(), hir),
             Symbol::Function {
                 param_types,
                 return_type,
                 ..
-            } => Some((
+            } => (
                 Type::Function {
                     param_types: param_types.clone(),
                     return_type: Box::new(return_type.clone()),
                 },
                 hir,
-            )),
-        }
+            ),
+        })
     }
 
     fn lower_binary_expr(&mut self, expr: BinaryExpr) -> Option<(Type, Hir)> {
@@ -339,18 +316,10 @@ impl Lowerer {
     }
 
     fn lower_named_type(&mut self, token: SyntaxToken) -> Option<Type> {
-        let name = token.text();
-
-        let Some(ty) = self
-            .scopes
-            .iter()
-            .rev()
-            .find_map(|scope| scope.lookup_type(name))
-        else {
-            return self.error(format!("undefined type `{name}`"), token.text_range());
-        };
-
-        Some(ty.clone())
+        match self.resolve_type(token.text()) {
+            Some(ty) => Some(ty.clone()),
+            None => self.error(format!("undefined type `{token}`"), token.text_range()),
+        }
     }
 
     fn define_item(&mut self, item: Item) -> Option<SymbolId> {
@@ -363,7 +332,7 @@ impl Lowerer {
         let name_token = item.name()?;
         let name = name_token.text().to_string();
 
-        if self.scope().lookup_name(&name).is_some() {
+        if self.scope().lookup_symbol(&name).is_some() {
             return self.error(
                 format!("there is already a variable named `{name}`"),
                 name_token.text_range(),
@@ -371,7 +340,6 @@ impl Lowerer {
         }
 
         let mut param_types = Vec::new();
-
         for param_type in item
             .param_list()
             .map(|list| list.params())
@@ -382,17 +350,30 @@ impl Lowerer {
 
         let return_type = self.lower_type(item.return_type()?)?;
 
-        let symbol = self.db.symbols.alloc(Symbol::Function {
+        let symbol = self.db.new_symbol(Symbol::Function {
             param_types,
             return_type,
             resolved_body: None,
+            scope: None,
         });
 
-        let scope = self.scope_mut();
-        scope.define(symbol);
-        scope.bind(name, symbol);
+        self.scope_mut().define_symbol(name, symbol);
 
         Some(symbol)
+    }
+
+    fn resolve_name(&self, name: &str) -> Option<SymbolId> {
+        self.scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.lookup_symbol(name))
+    }
+
+    fn resolve_type(&self, name: &str) -> Option<&Type> {
+        self.scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.lookup_type(name))
     }
 
     fn scope(&self) -> &Scope {
