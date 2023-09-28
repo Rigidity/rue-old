@@ -105,15 +105,18 @@ impl Lowerer {
     fn lower_fn_item(&mut self, item: FnItem, symbol_id: Option<SymbolId>) -> Option<()> {
         let mut scope = Scope::default();
 
-        for param in item
+        for (index, param) in item
             .param_list()
             .map(|list| list.params())
             .unwrap_or_default()
+            .iter()
+            .enumerate()
         {
             if let Some(name_token) = param.name() {
                 let name = name_token.text().to_string();
                 let ty = self.lower_type(param.ty()?)?;
-                let symbol = self.db.symbols.alloc(Symbol::Variable { ty });
+                let symbol = self.db.symbols.alloc(Symbol::Parameter { ty, index });
+                scope.define(symbol);
                 scope.bind(name, symbol);
             }
         }
@@ -190,10 +193,17 @@ impl Lowerer {
             return None;
         };
 
+        if !self.scope().is_defined(symbol_id) {
+            self.scope_mut().capture(symbol_id);
+        }
+
+        self.scope_mut().set_used(symbol_id);
+
         let hir = Hir::Symbol(symbol_id);
 
         match self.db.symbol(symbol_id) {
-            Symbol::Variable { ty } => Some((ty.clone(), hir)),
+            Symbol::Variable { ty, .. } => Some((ty.clone(), hir)),
+            Symbol::Parameter { ty, .. } => Some((ty.clone(), hir)),
             Symbol::Function {
                 param_types,
                 return_type,
@@ -393,7 +403,9 @@ impl Lowerer {
             resolved_body: None,
         });
 
-        self.scope_mut().bind(name, symbol);
+        let scope = self.scope_mut();
+        scope.define(symbol);
+        scope.bind(name, symbol);
 
         Some(symbol)
     }

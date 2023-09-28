@@ -8,6 +8,11 @@ pub type SymbolId = Idx<Symbol>;
 pub enum Symbol {
     Variable {
         ty: Type,
+        value: Hir,
+    },
+    Parameter {
+        ty: Type,
+        index: usize,
     },
     Function {
         param_types: Vec<Type>,

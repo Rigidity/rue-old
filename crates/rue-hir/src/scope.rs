@@ -1,11 +1,16 @@
 use std::collections::HashMap;
 
+use indexmap::IndexSet;
+
 use crate::{ty::Type, SymbolId};
 
 #[derive(Debug, Clone, Default)]
 pub struct Scope {
     symbols: HashMap<String, SymbolId>,
     types: HashMap<String, Type>,
+    definitions: IndexSet<SymbolId>,
+    captures: IndexSet<SymbolId>,
+    used: IndexSet<SymbolId>,
 }
 
 impl Scope {
@@ -23,5 +28,33 @@ impl Scope {
 
     pub fn bind_type(&mut self, name: String, ty: Type) {
         self.types.insert(name, ty);
+    }
+
+    pub fn capture(&mut self, symbol_id: SymbolId) {
+        self.captures.insert(symbol_id);
+    }
+
+    pub fn captures(&self) -> &IndexSet<SymbolId> {
+        &self.captures
+    }
+
+    pub fn define(&mut self, symbol_id: SymbolId) {
+        self.definitions.insert(symbol_id);
+    }
+
+    pub fn is_defined(&self, symbol_id: SymbolId) -> bool {
+        self.definitions.contains(&symbol_id)
+    }
+
+    pub fn definitions(&self) -> &IndexSet<SymbolId> {
+        &self.definitions
+    }
+
+    pub fn set_used(&mut self, symbol_id: SymbolId) {
+        self.used.insert(symbol_id);
+    }
+
+    pub fn used(&self) -> &IndexSet<SymbolId> {
+        &self.used
     }
 }
