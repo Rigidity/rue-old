@@ -98,11 +98,6 @@ impl Lowerer {
 
         self.scopes.push(fn_scope);
         let block = item.block().and_then(|block| self.lower_block(block));
-        let fn_scope = self.scopes.pop().unwrap();
-
-        for used_symbol in fn_scope.used_symbols() {
-            self.scope_mut().mark_used(*used_symbol);
-        }
 
         symbol_id.and_then(|symbol_id| {
             block.and_then(|(ty, hir)| {
@@ -119,7 +114,7 @@ impl Lowerer {
                         error = Some(format!("cannot return value of type `{ty}`, function has return type `{return_type}`"));
                     }
                     *resolved_body = Some(hir);
-                    *scope = Some(fn_scope);
+                    *scope = Some(self.scopes.pop().unwrap());
                 }
 
                 if let Some(error) = error {

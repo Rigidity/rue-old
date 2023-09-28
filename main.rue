@@ -6,6 +6,14 @@ fn factorial(num: Int) -> Int {
     }
 }
 
+fn fibonacci(num: Int) -> Int {
+    if num > 1 {
+        fibonacci(num - 1) + fibonacci(num - 2)
+    } else {
+        1
+    }
+}
+
 fn main() -> Int {
-    factorial(5)
+    fibonacci(5) + factorial(5)
 }

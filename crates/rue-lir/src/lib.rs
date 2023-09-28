@@ -30,37 +30,31 @@ impl Lowerer {
     }
 
     fn build_environment(&mut self) -> Vec<Lir> {
-        let mut lowered = IndexMap::new();
-
-        for symbol_id in self.scope().defined_symbols().clone() {
-            match self.db.symbol(symbol_id) {
-                Symbol::Parameter { .. } => {}
-                Symbol::Variable { value, .. } => {
-                    lowered.insert(symbol_id, self.lower_hir(&value.clone()));
-                }
-                Symbol::Function {
-                    resolved_body,
-                    scope,
-                    ..
-                } => {
-                    let value = self.lower_function(
-                        resolved_body.as_ref().unwrap().clone(),
-                        scope.as_ref().unwrap().clone(),
-                    );
-                    lowered.insert(symbol_id, Lir::Quote(Box::new(value)));
-                }
-            }
-        }
-
-        let (scope, _) = self.scopes.pop().unwrap();
-
         let mut environment = Vec::new();
 
-        for (symbol_id, value) in lowered {
-            if scope.used_symbols().contains(&symbol_id) {
-                environment.push(value);
+        for symbol_id in self.scope().defined_symbols().clone() {
+            if self.scope().used_symbols().contains(&symbol_id) {
+                match self.db.symbol(symbol_id) {
+                    Symbol::Parameter { .. } => {}
+                    Symbol::Variable { value, .. } => {
+                        environment.push(self.lower_hir(&value.clone()));
+                    }
+                    Symbol::Function {
+                        resolved_body,
+                        scope,
+                        ..
+                    } => {
+                        let value = self.lower_function(
+                            resolved_body.as_ref().unwrap().clone(),
+                            scope.as_ref().unwrap().clone(),
+                        );
+                        environment.push(Lir::Quote(Box::new(value)));
+                    }
+                }
             }
         }
+
+        self.pop_scope();
 
         environment
     }
@@ -184,6 +178,10 @@ impl Lowerer {
         &self.scopes.last().unwrap().0
     }
 
+    fn scope_mut(&mut self) -> &mut Scope {
+        &mut self.scopes.last_mut().unwrap().0
+    }
+
     fn symbol_table(&self) -> &IndexMap<SymbolId, Lir> {
         &self.scopes.last().unwrap().1
     }
@@ -216,5 +214,13 @@ impl Lowerer {
         }
 
         self.scopes.push((scope, symbol_table));
+    }
+
+    fn pop_scope(&mut self) {
+        let (scope, _) = self.scopes.pop().unwrap();
+
+        for captured_symbol in scope.captured_symbols() {
+            self.scope_mut().mark_used(captured_symbol);
+        }
     }
 }
