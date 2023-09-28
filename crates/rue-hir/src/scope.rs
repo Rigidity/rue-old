@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
+use indexmap::IndexSet;
+
 use crate::{ty::Type, SymbolId};
 
 #[derive(Debug, Clone, Default)]
 pub struct Scope {
     named_symbols: HashMap<String, SymbolId>,
     named_types: HashMap<String, Type>,
-    defined_symbols: Vec<SymbolId>,
-    used_symbols: Vec<SymbolId>,
+    defined_symbols: IndexSet<SymbolId>,
+    used_symbols: IndexSet<SymbolId>,
 }
 
 impl Scope {
@@ -17,17 +19,17 @@ impl Scope {
 
     pub fn define_symbol(&mut self, name: String, symbol_id: SymbolId) {
         self.named_symbols.insert(name, symbol_id);
-        self.defined_symbols.push(symbol_id);
+        self.defined_symbols.insert(symbol_id);
     }
 
-    pub fn defined_symbols(&self) -> Vec<SymbolId> {
-        self.defined_symbols.clone()
+    pub fn defined_symbols(&self) -> &IndexSet<SymbolId> {
+        &self.defined_symbols
     }
 
     pub fn captured_symbols(&self) -> Vec<SymbolId> {
         self.used_symbols
             .iter()
-            .filter(|symbol_id| !self.defined_symbols.contains(symbol_id))
+            .filter(|symbol_id| !self.defined_symbols.contains(*symbol_id))
             .copied()
             .collect()
     }
@@ -41,6 +43,10 @@ impl Scope {
     }
 
     pub fn mark_used(&mut self, symbol_id: SymbolId) {
-        self.used_symbols.push(symbol_id);
+        self.used_symbols.insert(symbol_id);
+    }
+
+    pub fn used_symbols(&self) -> &IndexSet<SymbolId> {
+        &self.used_symbols
     }
 }

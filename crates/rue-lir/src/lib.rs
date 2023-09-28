@@ -27,7 +27,7 @@ impl Lowerer {
     fn build_environment(&mut self) -> Vec<Lir> {
         let mut lowered = IndexMap::new();
 
-        for symbol_id in self.scope().defined_symbols() {
+        for symbol_id in self.scope().defined_symbols().clone() {
             match self.db.symbol(symbol_id) {
                 Symbol::Parameter { .. } => {}
                 Symbol::Variable { value, .. } => {
@@ -52,13 +52,15 @@ impl Lowerer {
         let mut environment = Vec::new();
         let mut path = 2;
 
-        for symbol_id in scope.captured_symbols() {
+        for _ in scope.captured_symbols() {
             environment.push(Lir::Path(path));
             path = path * 2 + 1;
         }
 
-        for value in lowered.into_values() {
-            environment.push(value);
+        for (symbol_id, value) in lowered {
+            if scope.used_symbols().contains(&symbol_id) {
+                environment.push(value);
+            }
         }
 
         environment
@@ -119,7 +121,54 @@ impl Lowerer {
     }
 
     fn lower_symbol(&mut self, symbol_id: SymbolId) -> Lir {
-        Lir::Path(2)
+        match self.db.symbol(symbol_id) {
+            Symbol::Parameter { index, .. }
+                if self.scope().defined_symbols().contains(&symbol_id) =>
+            {
+                let mut path = 2;
+
+                for _ in self.scope().captured_symbols() {
+                    path = path * 2 + 1;
+                }
+
+                for defined_symbol in self.scope().defined_symbols() {
+                    if matches!(self.db.symbol(*defined_symbol), Symbol::Parameter { .. }) {
+                        continue;
+                    }
+                    if self.scope().used_symbols().contains(defined_symbol) {
+                        path = path * 2 + 1;
+                    }
+                }
+
+                (0..*index).for_each(|_| path = path * 2 + 1);
+
+                Lir::Path(path)
+            }
+            _ => {
+                let mut path = 2;
+
+                for captured_symbol in self.scope().captured_symbols() {
+                    if captured_symbol == symbol_id {
+                        return Lir::Path(path);
+                    }
+                    path = path * 2 + 1;
+                }
+
+                for defined_symbol in self.scope().defined_symbols() {
+                    if self.scope().used_symbols().contains(defined_symbol) {
+                        if matches!(self.db.symbol(*defined_symbol), Symbol::Parameter { .. }) {
+                            continue;
+                        }
+                        if defined_symbol == &symbol_id {
+                            return Lir::Path(path);
+                        }
+                        path = path * 2 + 1;
+                    }
+                }
+
+                unreachable!();
+            }
+        }
     }
 
     fn lower_bin_op(&mut self, op: BinOp, lhs: &Hir, rhs: &Hir) -> Lir {
@@ -144,7 +193,7 @@ impl Lowerer {
                 let mut environment = Vec::new();
 
                 for capture in scope.captured_symbols() {
-                    environment.push(Lir::Path(2));
+                    environment.push(self.lower_symbol(capture));
                 }
 
                 for argument in arguments {

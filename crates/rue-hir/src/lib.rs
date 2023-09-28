@@ -79,7 +79,7 @@ impl Lowerer {
     }
 
     fn lower_fn_item(&mut self, item: FnItem, symbol_id: Option<SymbolId>) -> Option<()> {
-        let mut scope = Scope::default();
+        let mut fn_scope = Scope::default();
 
         for (index, param) in item
             .param_list()
@@ -92,12 +92,17 @@ impl Lowerer {
                 let name = name_token.text().to_string();
                 let ty = self.lower_type(param.ty()?)?;
                 let symbol_id = self.db.new_symbol(Symbol::Parameter { ty, index });
-                scope.define_symbol(name, symbol_id);
+                fn_scope.define_symbol(name, symbol_id);
             }
         }
 
-        self.scopes.push(scope);
+        self.scopes.push(fn_scope);
         let block = item.block().and_then(|block| self.lower_block(block));
+        let fn_scope = self.scopes.pop().unwrap();
+
+        for used_symbol in fn_scope.used_symbols() {
+            self.scope_mut().mark_used(*used_symbol);
+        }
 
         symbol_id.and_then(|symbol_id| {
             block.and_then(|(ty, hir)| {
@@ -114,7 +119,7 @@ impl Lowerer {
                         error = Some(format!("cannot return value of type `{ty}`, function has return type `{return_type}`"));
                     }
                     *resolved_body = Some(hir);
-                    *scope = self.scopes.pop();
+                    *scope = Some(fn_scope);
                 }
 
                 if let Some(error) = error {
