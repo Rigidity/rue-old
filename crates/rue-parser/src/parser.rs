@@ -1,4 +1,7 @@
+use std::mem;
+
 use indexmap::IndexSet;
+use itertools::Itertools;
 use rowan::{Checkpoint, GreenNodeBuilder, Language};
 use rue_error::Error;
 use rue_lexer::Token;
@@ -75,6 +78,25 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn error(&mut self) {
+        self.eat_trivia();
+
+        let eof = (SyntaxKind::Eof, self.text_pos..self.text_pos);
+        let (kind, range) = self.tokens.get(self.pos).map_or(eof, |token| {
+            let next_text_pos = self.text_pos + token.1.len();
+            let range = self.text_pos..next_text_pos;
+            (token.0, range)
+        });
+
+        let expected = mem::take(&mut self.expected_kinds)
+            .into_iter()
+            .map(|kind| format!("`{kind}`"))
+            .join(", ");
+
+        self.errors.push(Error::new(
+            format!("found {kind}, expected one of: {expected}"),
+            range.into(),
+        ));
+
         if !self.at_set(&RECOVERY_SET) && !self.at_eof() {
             self.start(SyntaxKind::Error);
             self.bump();
