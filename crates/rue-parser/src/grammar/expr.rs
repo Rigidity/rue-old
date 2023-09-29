@@ -15,7 +15,7 @@ fn parse_binary_expr(p: &mut Parser, min_binding_power: u8) {
         T![if] => parse_if_expr(checkpoint, p),
         T![-] => parse_prefix_expr(checkpoint, p, 7),
         T!['('] => parse_group_expr(p),
-        kind => p.error(format!("expected expression, found {kind}")),
+        _ => return p.error(),
     }
 
     if p.peek() == T!['('] {
@@ -27,7 +27,7 @@ fn parse_binary_expr(p: &mut Parser, min_binding_power: u8) {
             T![<] | T![>] => (1, 2),
             T![+] | T![-] => (3, 4),
             T![*] | T![/] => (5, 6),
-            _ => return,
+            _ => break,
         };
 
         if left_binding_power < min_binding_power {
@@ -54,7 +54,7 @@ fn parse_group_expr(p: &mut Parser) {
 
     p.bump();
     parse_expr(p);
-    p.eat(T![')']);
+    p.expect(T![')']);
 }
 
 fn parse_call_expr(checkpoint: Checkpoint, p: &mut Parser) {
@@ -73,7 +73,7 @@ fn parse_call_expr(checkpoint: Checkpoint, p: &mut Parser) {
         }
     }
 
-    p.eat(T![')']);
+    p.expect(T![')']);
     p.finish();
 }
 
@@ -84,7 +84,7 @@ fn parse_if_expr(checkpoint: Checkpoint, p: &mut Parser) {
     p.bump();
     parse_expr(p);
     parse_block(p);
-    p.eat(T![else]);
+    p.expect(T![else]);
     parse_block(p);
     p.finish()
 }

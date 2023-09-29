@@ -7,16 +7,16 @@ use super::{parse_block, ty::parse_type};
 pub(super) fn parse_item(p: &mut Parser) {
     match p.peek() {
         T![fn] => parse_fn_item(p),
-        kind => p.error(format!("expected item, found {kind}")),
+        _ => p.error(),
     }
 }
 
 fn parse_fn_item(p: &mut Parser) {
     p.start(SyntaxKind::FnItem);
-    p.eat(T![fn]);
-    p.eat(SyntaxKind::Ident);
+    p.expect(T![fn]);
+    p.expect(SyntaxKind::Ident);
     parse_fn_param_list(p);
-    p.eat(T![->]);
+    p.expect(T![->]);
     parse_type(p);
     parse_block(p);
     p.finish();
@@ -24,7 +24,7 @@ fn parse_fn_item(p: &mut Parser) {
 
 fn parse_fn_param_list(p: &mut Parser) {
     p.start(SyntaxKind::FnParamList);
-    p.eat(T!['(']);
+    p.expect(T!['(']);
 
     while !matches!(p.peek(), SyntaxKind::Eof | T![')']) {
         parse_fn_param(p);
@@ -36,14 +36,14 @@ fn parse_fn_param_list(p: &mut Parser) {
         }
     }
 
-    p.eat(T![')']);
+    p.expect(T![')']);
     p.finish();
 }
 
 fn parse_fn_param(p: &mut Parser) {
     p.start(SyntaxKind::FnParam);
-    p.eat(SyntaxKind::Ident);
-    p.eat(T![:]);
+    p.expect(SyntaxKind::Ident);
+    p.expect(T![:]);
     parse_type(p);
     p.finish();
 }
@@ -83,7 +83,6 @@ mod tests {
                       Integer@35..37 "42"
                       Whitespace@37..38 " "
                       CloseBrace@38..39 "}""#]],
-            &[],
         );
     }
 }

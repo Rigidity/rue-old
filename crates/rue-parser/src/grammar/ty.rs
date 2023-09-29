@@ -7,6 +7,6 @@ pub(super) fn parse_type(p: &mut Parser) {
         SyntaxKind::Ident => {
             p.bump();
         }
-        kind => p.error(format!("expected type, found {kind}")),
+        _ => p.error(),
     }
 }

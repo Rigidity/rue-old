@@ -23,19 +23,18 @@ pub(super) fn parse_program(p: &mut Parser) {
 
 fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
-    p.eat(T!['{']);
+    p.expect(T!['{']);
     while is_stmt(p) {
         parse_stmt(p);
     }
     parse_expr(p);
-    p.eat(T!['}']);
+    p.expect(T!['}']);
     p.finish();
 }
 
 #[cfg(test)]
 mod tests {
     use expect_test::{expect, Expect};
-    use rue_error::Error;
     use rue_lexer::{Lexer, Token};
 
     use crate::Parser;
@@ -45,17 +44,15 @@ mod tests {
     #[macro_export]
     macro_rules! check {
         ($name:ident: $parser:ident => $run:expr) => {
-            pub fn $name(input: &str, expected_tree: Expect, expected_errors: &[Error]) {
+            pub fn $name(input: &str, expected_tree: Expect) {
                 let tokens: Vec<Token> = Lexer::new(input).collect();
                 let mut $parser = Parser::new(&tokens);
 
                 $run;
 
-                let (errors, node) = $parser.output();
+                let node = $parser.output().1;
                 let raw_tree = format!("{:#?}", node);
                 expected_tree.assert_eq(&raw_tree[0..(raw_tree.len() - 1)]);
-
-                assert_eq!(errors, expected_errors);
             }
         };
     }
@@ -64,7 +61,7 @@ mod tests {
 
     #[test]
     fn parse_nothing() {
-        check_program("", expect![[r#"Program@0..0"#]], &[]);
+        check_program("", expect![[r#"Program@0..0"#]]);
     }
 
     #[test]
@@ -77,7 +74,6 @@ mod tests {
                   Whitespace@15..16 "\n"
                   BlockComment@16..35 "/* Block comment */"
                   Whitespace@35..36 "\n""#]],
-            &[],
         );
     }
 }

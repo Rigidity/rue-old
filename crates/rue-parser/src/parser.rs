@@ -3,6 +3,8 @@ use rue_error::Error;
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind, SyntaxNode, T};
 
+const RECOVERY_SET: [SyntaxKind; 4] = [T!['}'], T![;], T![fn], T![let]];
+
 pub(crate) struct Parser<'a> {
     tokens: Vec<(SyntaxKind, &'a str)>,
     errors: Vec<Error>,
@@ -40,72 +42,74 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn peek(&mut self) -> SyntaxKind {
         self.eat_trivia();
-        self.peek_raw()
-    }
-
-    fn peek_text_pos(&mut self) -> usize {
-        self.eat_trivia();
-        let len = self
-            .tokens
-            .get(self.pos)
-            .map(|token| token.1.len())
-            .unwrap_or_default();
-        self.text_pos + len
-    }
-
-    fn peek_raw(&self) -> SyntaxKind {
-        self.nth_raw(0)
-    }
-
-    fn nth_raw(&self, n: usize) -> SyntaxKind {
-        self.tokens
-            .get(self.pos + n)
-            .map(|token| token.0)
-            .unwrap_or_default()
+        self.nth(0)
     }
 
     pub(crate) fn bump(&mut self) {
         self.eat_trivia();
         if let Some(token) = self.tokens.get(self.pos) {
-            self.do_bump(*token);
+            self.add_tokens(token.0, 1);
         }
     }
 
-    fn do_bump(&mut self, token: (SyntaxKind, &'a str)) {
-        self.builder.token(RueLang::kind_to_raw(token.0), token.1);
-        self.pos += 1;
-        self.text_pos += token.1.len();
+    pub(crate) fn expect(&mut self, kind: SyntaxKind) {
+        self.eat_trivia();
+        if let Some(num_tokens) = self.peek_tokens_of(kind) {
+            self.add_tokens(kind, num_tokens);
+        } else {
+            self.error();
+        }
     }
 
-    pub(crate) fn eat(&mut self, kind: SyntaxKind) -> bool {
+    pub(crate) fn error(&mut self) {
+        if !self.at_set(&RECOVERY_SET) {
+            self.start(SyntaxKind::Error);
+            self.bump();
+            self.finish();
+        }
+    }
+
+    fn at_set(&mut self, set: &[SyntaxKind]) -> bool {
+        set.contains(&self.peek())
+    }
+
+    fn nth(&self, pos: usize) -> SyntaxKind {
+        self.tokens
+            .get(self.pos + pos)
+            .map(|token| token.0)
+            .unwrap_or_default()
+    }
+
+    fn nth_at(&self, pos: usize, kind: SyntaxKind) -> bool {
+        self.nth(pos) == kind
+    }
+
+    fn peek_tokens_of(&mut self, kind: SyntaxKind) -> Option<usize> {
         match kind {
-            T![->] => {
-                if (self.nth_raw(0), self.nth_raw(1)) == (T![-], T![>]) {
-                    let (a, b) = (self.tokens[self.pos], self.tokens[self.pos + 1]);
-                    let mut text = String::from(a.1);
-                    text.push_str(b.1);
-                    self.builder.token(RueLang::kind_to_raw(kind), &text);
-                    self.pos += 2;
-                    self.text_pos += text.len();
-                    true
-                } else {
-                    let next = self.peek();
-                    self.error(format!("expected {}, found {}", kind, next));
-                    false
-                }
-            }
-            _ => {
-                let next = self.peek();
+            T![->] if self.nth_at(0, T![-]) && self.nth_at(1, T![>]) => Some(2),
+            _ if self.peek() == kind => Some(1),
+            _ => None,
+        }
+    }
 
-                if next == kind {
-                    self.bump();
-                    true
-                } else {
-                    self.error(format!("expected {}, found {}", kind, next));
-                    false
-                }
+    fn eat_trivia(&mut self) {
+        while let Some(token) = self.tokens.get(self.pos) {
+            if token.0.is_trivia() {
+                self.add_tokens(token.0, 1);
+            } else {
+                break;
             }
         }
+    }
+
+    fn add_tokens(&mut self, kind: SyntaxKind, num_tokens: usize) {
+        let mut text = String::new();
+        for pos in 0..num_tokens {
+            text.push_str(self.tokens[self.pos + pos].1);
+        }
+        self.builder.token(RueLang::kind_to_raw(kind), &text);
+        self.pos += num_tokens;
+        self.text_pos += text.len();
     }
 
     pub(crate) fn checkpoint(&mut self) -> Checkpoint {
@@ -124,26 +128,6 @@ impl<'a> Parser<'a> {
     pub(crate) fn finish(&mut self) {
         self.eat_trivia();
         self.builder.finish_node();
-    }
-
-    pub(crate) fn error(&mut self, message: String) {
-        let end = self.peek_text_pos();
-        let range = self.text_pos..end;
-        self.errors.push(Error::new(message, range.into()));
-
-        self.start(SyntaxKind::Error);
-        self.bump();
-        self.finish();
-    }
-
-    fn eat_trivia(&mut self) {
-        while let Some(token) = self.tokens.get(self.pos) {
-            if token.0.is_trivia() {
-                self.do_bump(*token);
-            } else {
-                break;
-            }
-        }
     }
 }
 

@@ -11,22 +11,22 @@ pub(super) fn is_stmt(p: &mut Parser) -> bool {
 pub(super) fn parse_stmt(p: &mut Parser) {
     match p.peek() {
         T![let] => parse_let_stmt(p),
-        kind => p.error(format!("expected statement, found {kind}")),
+        _ => p.error(),
     }
 }
 
 fn parse_let_stmt(p: &mut Parser) {
     p.start(SyntaxKind::LetStmt);
-    p.eat(T![let]);
-    p.eat(SyntaxKind::Ident);
+    p.expect(T![let]);
+    p.expect(SyntaxKind::Ident);
 
     if p.peek() == T![:] {
         p.bump();
         parse_type(p);
     }
 
-    p.eat(T![=]);
+    p.expect(T![=]);
     parse_expr(p);
-    p.eat(T![;]);
+    p.expect(T![;]);
     p.finish();
 }
