@@ -10,34 +10,41 @@ pub(super) fn parse_expr(p: &mut Parser) {
 fn parse_binary_expr(p: &mut Parser, min_binding_power: u8) {
     let checkpoint = p.checkpoint();
 
-    match p.peek() {
-        SyntaxKind::Integer | SyntaxKind::String | SyntaxKind::Ident => p.bump(),
-        T![if] => parse_if_expr(checkpoint, p),
-        T![-] => parse_prefix_expr(checkpoint, p, 7),
-        T!['('] => parse_group_expr(p),
-        _ => return p.error(),
+    if p.at_set(&[SyntaxKind::Integer, SyntaxKind::String, SyntaxKind::Ident]) {
+        p.bump();
+    } else if p.at(T![if]) {
+        parse_if_expr(checkpoint, p);
+    } else if p.at(T![-]) {
+        parse_prefix_expr(checkpoint, p, 7);
+    } else if p.at(T!['(']) {
+        parse_group_expr(p);
+    } else {
+        return p.error();
     }
 
-    if p.peek() == T!['('] {
+    if p.at(T!['(']) {
         parse_call_expr(checkpoint, p);
     }
 
     loop {
-        let (left_binding_power, right_binding_power) = match p.peek() {
-            T![<] | T![>] => (1, 2),
-            T![+] | T![-] => (3, 4),
-            T![*] | T![/] => (5, 6),
-            _ => break,
+        let binding = if p.at_set(&[T![<], T![>]]) {
+            (1, 2)
+        } else if p.at_set(&[T![+], T![-]]) {
+            (3, 4)
+        } else if p.at_set(&[T![*], T![/]]) {
+            (5, 6)
+        } else {
+            break;
         };
 
-        if left_binding_power < min_binding_power {
+        if binding.0 < min_binding_power {
             return;
         }
 
         p.bump();
 
         p.start_at(checkpoint, SyntaxKind::BinaryExpr);
-        parse_binary_expr(p, right_binding_power);
+        parse_binary_expr(p, binding.1);
         p.finish();
     }
 }
@@ -50,23 +57,19 @@ fn parse_prefix_expr(checkpoint: Checkpoint, p: &mut Parser, op_binding_power: u
 }
 
 fn parse_group_expr(p: &mut Parser) {
-    debug_assert!(p.peek() == T!['(']);
-
     p.bump();
     parse_expr(p);
     p.expect(T![')']);
 }
 
 fn parse_call_expr(checkpoint: Checkpoint, p: &mut Parser) {
-    debug_assert!(p.peek() == T!['(']);
-
     p.start_at(checkpoint, SyntaxKind::CallExpr);
     p.bump();
 
-    while !matches!(p.peek(), SyntaxKind::Eof | T![')']) {
+    while !p.at_set(&[T![')'], SyntaxKind::Eof]) {
         parse_expr(p);
 
-        if p.peek() == T![,] {
+        if p.at(T![,]) {
             p.bump();
         } else {
             break;
@@ -78,8 +81,6 @@ fn parse_call_expr(checkpoint: Checkpoint, p: &mut Parser) {
 }
 
 fn parse_if_expr(checkpoint: Checkpoint, p: &mut Parser) {
-    debug_assert!(p.peek() == T![if]);
-
     p.start_at(checkpoint, SyntaxKind::IfExpr);
     p.bump();
     parse_expr(p);

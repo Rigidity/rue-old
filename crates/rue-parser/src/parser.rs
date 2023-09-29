@@ -1,3 +1,4 @@
+use indexmap::IndexSet;
 use rowan::{Checkpoint, GreenNodeBuilder, Language};
 use rue_error::Error;
 use rue_lexer::Token;
@@ -11,6 +12,7 @@ pub(crate) struct Parser<'a> {
     builder: GreenNodeBuilder<'static>,
     pos: usize,
     text_pos: usize,
+    expected_kinds: IndexSet<SyntaxKind>,
 }
 
 impl<'a> Parser<'a> {
@@ -32,6 +34,7 @@ impl<'a> Parser<'a> {
             builder: GreenNodeBuilder::new(),
             pos: 0,
             text_pos: 0,
+            expected_kinds: IndexSet::new(),
         }
     }
 
@@ -40,12 +43,21 @@ impl<'a> Parser<'a> {
         (self.errors, SyntaxNode::new_root(green_node))
     }
 
-    pub(crate) fn peek(&mut self) -> SyntaxKind {
-        self.eat_trivia();
-        self.nth(0)
+    pub(crate) fn at(&mut self, kind: SyntaxKind) -> bool {
+        self.expected_kinds.insert(kind);
+        self.peek() == kind
+    }
+
+    pub(crate) fn at_set(&mut self, set: &[SyntaxKind]) -> bool {
+        set.iter().any(|kind| self.at(*kind))
+    }
+
+    pub(crate) fn at_eof(&mut self) -> bool {
+        self.at(SyntaxKind::Eof)
     }
 
     pub(crate) fn bump(&mut self) {
+        self.expected_kinds.clear();
         self.eat_trivia();
         if let Some(token) = self.tokens.get(self.pos) {
             self.add_tokens(token.0, 1);
@@ -53,6 +65,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn expect(&mut self, kind: SyntaxKind) {
+        self.expected_kinds.clear();
         self.eat_trivia();
         if let Some(num_tokens) = self.peek_tokens_of(kind) {
             self.add_tokens(kind, num_tokens);
@@ -62,19 +75,16 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn error(&mut self) {
-        if !self.at_set(&RECOVERY_SET) && !self.at_end() {
+        if !self.at_set(&RECOVERY_SET) && !self.at_eof() {
             self.start(SyntaxKind::Error);
             self.bump();
             self.finish();
         }
     }
 
-    fn at_set(&mut self, set: &[SyntaxKind]) -> bool {
-        set.contains(&self.peek())
-    }
-
-    fn at_end(&mut self) -> bool {
-        self.peek() == SyntaxKind::Eof
+    fn peek(&mut self) -> SyntaxKind {
+        self.eat_trivia();
+        self.nth(0)
     }
 
     fn nth(&self, pos: usize) -> SyntaxKind {

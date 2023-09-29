@@ -5,7 +5,7 @@ use crate::parser::Parser;
 use self::{
     expr::parse_expr,
     item::parse_item,
-    stmt::{is_stmt, parse_stmt},
+    stmt::{parse_stmt, STMT_SET},
 };
 
 mod expr;
@@ -15,7 +15,7 @@ mod ty;
 
 pub(super) fn parse_program(p: &mut Parser) {
     p.start(SyntaxKind::Program);
-    while p.peek() != SyntaxKind::Eof {
+    while !p.at_eof() {
         parse_item(p);
     }
     p.finish();
@@ -24,7 +24,7 @@ pub(super) fn parse_program(p: &mut Parser) {
 fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
     p.expect(T!['{']);
-    while is_stmt(p) {
+    while p.at_set(&STMT_SET) {
         parse_stmt(p);
     }
     parse_expr(p);

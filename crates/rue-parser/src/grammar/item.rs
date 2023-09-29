@@ -5,9 +5,10 @@ use crate::parser::Parser;
 use super::{parse_block, ty::parse_type};
 
 pub(super) fn parse_item(p: &mut Parser) {
-    match p.peek() {
-        T![fn] => parse_fn_item(p),
-        _ => p.error(),
+    if p.at(T![fn]) {
+        parse_fn_item(p);
+    } else {
+        p.error();
     }
 }
 
@@ -26,10 +27,10 @@ fn parse_fn_param_list(p: &mut Parser) {
     p.start(SyntaxKind::FnParamList);
     p.expect(T!['(']);
 
-    while !matches!(p.peek(), SyntaxKind::Eof | T![')']) {
+    while !p.at_set(&[T![')'], SyntaxKind::Eof]) {
         parse_fn_param(p);
 
-        if p.peek() == T![,] {
+        if p.at(T![,]) {
             p.bump();
         } else {
             break;

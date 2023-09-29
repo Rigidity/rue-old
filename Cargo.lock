@@ -994,6 +994,7 @@ name = "rue-parser"
 version = "0.1.0"
 dependencies = [
  "expect-test",
+ "indexmap",
  "rowan",
  "rue-error",
  "rue-lexer",
