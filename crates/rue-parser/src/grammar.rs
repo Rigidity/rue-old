@@ -37,7 +37,6 @@ mod tests {
     use expect_test::{expect, Expect};
     use rue_error::Error;
     use rue_lexer::{Lexer, Token};
-    use rue_syntax::SyntaxNode;
 
     use crate::Parser;
 
@@ -52,9 +51,8 @@ mod tests {
 
                 $run;
 
-                let (errors, green_node) = $parser.output();
-
-                let raw_tree = format!("{:#?}", SyntaxNode::new_root(green_node));
+                let (errors, node) = $parser.output();
+                let raw_tree = format!("{:#?}", node);
                 expected_tree.assert_eq(&raw_tree[0..(raw_tree.len() - 1)]);
 
                 assert_eq!(errors, expected_errors);
@@ -67,5 +65,19 @@ mod tests {
     #[test]
     fn parse_nothing() {
         check_program("", expect![[r#"Program@0..0"#]], &[]);
+    }
+
+    #[test]
+    fn parse_trivia() {
+        check_program(
+            "// Line comment\n/* Block comment */\n",
+            expect![[r#"
+                Program@0..36
+                  LineComment@0..15 "// Line comment"
+                  Whitespace@15..16 "\n"
+                  BlockComment@16..35 "/* Block comment */"
+                  Whitespace@35..36 "\n""#]],
+            &[],
+        )
     }
 }
