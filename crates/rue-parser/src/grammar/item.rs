@@ -1,6 +1,6 @@
 use rue_syntax::{SyntaxKind, T};
 
-use crate::Parser;
+use crate::parser::Parser;
 
 use super::{parse_block, ty::parse_type};
 

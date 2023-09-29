@@ -1,6 +1,6 @@
 use rue_syntax::SyntaxKind;
 
-use crate::Parser;
+use crate::parser::Parser;
 
 pub(super) fn parse_type(p: &mut Parser) {
     match p.peek() {

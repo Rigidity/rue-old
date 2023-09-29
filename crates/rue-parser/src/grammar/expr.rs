@@ -1,7 +1,7 @@
 use rowan::Checkpoint;
 use rue_syntax::{SyntaxKind, T};
 
-use crate::{grammar::parse_block, Parser};
+use crate::{grammar::parse_block, parser::Parser};
 
 pub(super) fn parse_expr(p: &mut Parser) {
     parse_binary_expr(p, 0);
