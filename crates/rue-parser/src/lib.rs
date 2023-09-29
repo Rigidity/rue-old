@@ -1,13 +1,12 @@
 use grammar::parse_root;
 use rowan::{Checkpoint, GreenNodeBuilder, Language};
+use rue_error::Error;
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind, T};
 
-mod error;
 mod grammar;
 mod output;
 
-pub use error::*;
 pub use output::*;
 
 pub struct Parser<'a> {
@@ -138,10 +137,8 @@ impl<'a> Parser<'a> {
 
     fn error(&mut self, message: String) {
         let end = self.peek_text_pos();
-        self.errors.push(Error {
-            span: self.text_pos..end,
-            message,
-        });
+        let range = self.text_pos..end;
+        self.errors.push(Error::new(message, range.into()));
 
         self.start(SyntaxKind::Error);
         self.bump();
@@ -167,10 +164,8 @@ fn convert_token<'a>(
     use rue_lexer::TokenKind as T;
 
     let mut error = |message: String| {
-        errors.push(Error {
-            span: pos..(pos + token.text.len()),
-            message,
-        })
+        let range = pos..(pos + token.text.len());
+        errors.push(Error::new(message, range.into()));
     };
 
     let kind = match token.kind {

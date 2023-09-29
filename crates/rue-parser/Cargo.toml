@@ -7,3 +7,4 @@ edition = "2021"
 rowan = "0.15.11"
 rue-lexer = { version = "0.1.0", path = "../rue-lexer" }
 rue-syntax = { version = "0.1.0", path = "../rue-syntax" }
+rue-error = { version = "0.1.0", path = "../rue-error" }
