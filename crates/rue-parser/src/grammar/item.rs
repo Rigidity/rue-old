@@ -47,3 +47,43 @@ fn parse_fn_param(p: &mut Parser) {
     parse_type(p);
     p.finish();
 }
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::grammar::tests::check_program;
+
+    #[test]
+    fn parse_fn() {
+        check_program(
+            "fn fourty_two(value: Int) -> Int { 42 }",
+            expect![[r#"
+                Program@0..39
+                  FnItem@0..39
+                    Fn@0..2 "fn"
+                    Whitespace@2..3 " "
+                    Ident@3..13 "fourty_two"
+                    FnParamList@13..26
+                      OpenParen@13..14 "("
+                      FnParam@14..24
+                        Ident@14..19 "value"
+                        Colon@19..20 ":"
+                        Whitespace@20..21 " "
+                        Ident@21..24 "Int"
+                      CloseParen@24..25 ")"
+                      Whitespace@25..26 " "
+                    Arrow@26..28 "->"
+                    Whitespace@28..29 " "
+                    Ident@29..32 "Int"
+                    Block@32..39
+                      Whitespace@32..33 " "
+                      OpenBrace@33..34 "{"
+                      Whitespace@34..35 " "
+                      Integer@35..37 "42"
+                      Whitespace@37..38 " "
+                      CloseBrace@38..39 "}""#]],
+            &[],
+        );
+    }
+}

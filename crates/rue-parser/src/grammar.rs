@@ -78,6 +78,6 @@ mod tests {
                   BlockComment@16..35 "/* Block comment */"
                   Whitespace@35..36 "\n""#]],
             &[],
-        )
+        );
     }
 }
