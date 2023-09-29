@@ -62,7 +62,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn error(&mut self) {
-        if !self.at_set(&RECOVERY_SET) {
+        if !self.at_set(&RECOVERY_SET) && !self.at_end() {
             self.start(SyntaxKind::Error);
             self.bump();
             self.finish();
@@ -71,6 +71,10 @@ impl<'a> Parser<'a> {
 
     fn at_set(&mut self, set: &[SyntaxKind]) -> bool {
         set.contains(&self.peek())
+    }
+
+    fn at_end(&mut self) -> bool {
+        self.peek() == SyntaxKind::Eof
     }
 
     fn nth(&self, pos: usize) -> SyntaxKind {

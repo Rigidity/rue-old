@@ -85,4 +85,32 @@ mod tests {
                       CloseBrace@38..39 "}""#]],
         );
     }
+
+    #[test]
+    fn parse_incomplete_fn_keyword() {
+        check_program(
+            "fn",
+            expect![[r#"
+            Program@0..2
+              FnItem@0..2
+                Fn@0..2 "fn"
+                FnParamList@2..2
+                Block@2..2"#]],
+        );
+    }
+
+    #[test]
+    fn parse_incomplete_fn_name() {
+        check_program(
+            "fn incomplete",
+            expect![[r#"
+                Program@0..13
+                  FnItem@0..13
+                    Fn@0..2 "fn"
+                    Whitespace@2..3 " "
+                    Ident@3..13 "incomplete"
+                    FnParamList@13..13
+                    Block@13..13"#]],
+        );
+    }
 }
