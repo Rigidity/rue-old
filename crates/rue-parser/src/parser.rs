@@ -1,7 +1,7 @@
-use rowan::{Checkpoint, GreenNode, GreenNodeBuilder, Language};
+use rowan::{Checkpoint, GreenNodeBuilder, Language};
 use rue_error::Error;
 use rue_lexer::Token;
-use rue_syntax::{RueLang, SyntaxKind, T};
+use rue_syntax::{RueLang, SyntaxKind, SyntaxNode, T};
 
 pub(crate) struct Parser<'a> {
     tokens: Vec<(SyntaxKind, &'a str)>,
@@ -33,9 +33,9 @@ impl<'a> Parser<'a> {
         }
     }
 
-    pub(crate) fn output(self) -> (Vec<Error>, GreenNode) {
+    pub(crate) fn output(self) -> (Vec<Error>, SyntaxNode) {
         let green_node = self.builder.finish();
-        (self.errors, green_node)
+        (self.errors, SyntaxNode::new_root(green_node))
     }
 
     pub(crate) fn peek(&mut self) -> SyntaxKind {

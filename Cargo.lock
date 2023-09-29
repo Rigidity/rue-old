@@ -924,11 +924,10 @@ dependencies = [
  "rowan",
  "rue-ast",
  "rue-compiler",
+ "rue-error",
  "rue-hir",
- "rue-lexer",
  "rue-lir",
  "rue-parser",
- "rue-syntax",
 ]
 
 [[package]]

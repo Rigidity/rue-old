@@ -11,8 +11,7 @@ clvmr = "0.3.0"
 num-derive = "0.4.0"
 num-traits = "0.2.15"
 rowan = "0.15.11"
-rue-lexer = { version = "0.1.0", path = "./crates/rue-lexer" }
-rue-syntax = { version = "0.1.0", path = "./crates/rue-syntax" }
+rue-error = { version = "0.1.0", path = "./crates/rue-error" }
 rue-parser = { version = "0.1.0", path = "./crates/rue-parser" }
 rue-ast = { version = "0.1.0", path = "./crates/rue-ast" }
 rue-hir = { version = "0.1.0", path = "./crates/rue-hir" }
