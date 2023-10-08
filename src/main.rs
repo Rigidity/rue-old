@@ -1,3 +1,7 @@
+use std::fs;
+
+use anyhow::anyhow;
+use clap::Parser;
 use clvmr::{
     reduction::Reduction,
     serde::{node_from_bytes, node_to_bytes},
@@ -8,8 +12,21 @@ use rue_compiler::Compiler;
 use rue_error::Error;
 use rue_parser::parse_text;
 
-fn main() {
-    match compile(include_str!("../main.rue")) {
+/// Rue compiler.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// The file to compile.
+    input_file: String,
+}
+
+fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
+
+    let source = fs::read_to_string(&args.input_file)
+        .map_err(|_| anyhow!("unknown file {}", args.input_file))?;
+
+    match compile(&source) {
         Ok(bytes) => {
             println!("{}", hex::encode(&bytes));
 
@@ -30,6 +47,8 @@ fn main() {
             eprintln!("{:?}", errors);
         }
     }
+
+    Ok(())
 }
 
 fn compile(source: &str) -> Result<Vec<u8>, Vec<Error>> {

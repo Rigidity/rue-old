@@ -18,3 +18,5 @@ rue-hir = { version = "0.1.0", path = "./crates/rue-hir" }
 rue-lir = { version = "0.1.0", path = "./crates/rue-lir" }
 rue-compiler = { version = "0.1.0", path = "./crates/rue-compiler" }
 hex = "0.4.3"
+clap = { version = "4.4.6", features = ["derive"] }
+anyhow = "1.0.75"
