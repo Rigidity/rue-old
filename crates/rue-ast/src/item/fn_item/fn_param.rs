@@ -1,15 +1,10 @@
-use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxToken};
 
-use crate::Type;
+use crate::ast_node;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnParam(pub SyntaxNode);
+ast_node!(FnParam);
 
 impl FnParam {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::FnParam).then(|| Self(node))
-    }
-
     pub fn name(&self) -> Option<SyntaxToken> {
         self.0
             .children_with_tokens()
@@ -17,7 +12,11 @@ impl FnParam {
             .find(|token| token.kind() == SyntaxKind::Ident)
     }
 
-    pub fn ty(&self) -> Option<Type> {
-        self.0.children_with_tokens().filter_map(Type::cast).nth(1)
+    pub fn ty(&self) -> Option<SyntaxToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(SyntaxElement::into_token)
+            .filter(|token| token.kind() == SyntaxKind::Ident)
+            .nth(1)
     }
 }

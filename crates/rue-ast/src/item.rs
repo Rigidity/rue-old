@@ -1,20 +1,9 @@
-use rue_syntax::SyntaxNode;
-
 mod fn_item;
 
 pub use fn_item::*;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Item {
-    Fn(FnItem),
-}
+use crate::ast_enum;
 
-impl Item {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        if let Some(value) = FnItem::cast(node) {
-            Some(Self::Fn(value))
-        } else {
-            None
-        }
-    }
+ast_enum! { Item,
+    Fn(FnItem),
 }

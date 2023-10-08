@@ -7,6 +7,7 @@ use clvmr::{
     serde::{node_from_bytes, node_to_bytes},
     Allocator, ChiaDialect,
 };
+use rowan::ast::AstNode;
 use rue_ast::Program;
 use rue_compiler::Compiler;
 use rue_error::Error;

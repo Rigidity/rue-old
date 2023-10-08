@@ -1,15 +1,11 @@
-use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use rowan::ast::AstNode;
+use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxToken};
 
-use crate::{Expr, Type};
+use crate::{ast_node, Expr};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct LetStmt(pub SyntaxNode);
+ast_node!(LetStmt);
 
 impl LetStmt {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::LetStmt).then(|| Self(node))
-    }
-
     pub fn name(&self) -> Option<SyntaxToken> {
         self.0
             .children_with_tokens()
@@ -17,11 +13,15 @@ impl LetStmt {
             .find(|token| token.kind() == SyntaxKind::Ident)
     }
 
-    pub fn ty(&self) -> Option<Type> {
-        self.0.children_with_tokens().find_map(Type::cast)
+    pub fn ty(&self) -> Option<SyntaxToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(SyntaxElement::into_token)
+            .filter(|token| token.kind() == SyntaxKind::Ident)
+            .nth(1)
     }
 
     pub fn value(&self) -> Option<Expr> {
-        self.0.children_with_tokens().find_map(Expr::cast)
+        self.0.children().find_map(Expr::cast)
     }
 }

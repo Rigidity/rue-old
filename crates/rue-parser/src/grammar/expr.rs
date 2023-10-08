@@ -11,7 +11,9 @@ fn parse_binary_expr(p: &mut Parser, min_binding_power: u8) {
     let checkpoint = p.checkpoint();
 
     if p.at_set(&[SyntaxKind::Integer, SyntaxKind::String, SyntaxKind::Ident]) {
+        p.start(SyntaxKind::LiteralExpr);
         p.bump();
+        p.finish();
     } else if p.at(T![if]) {
         parse_if_expr(checkpoint, p);
     } else if p.at(T![-]) {

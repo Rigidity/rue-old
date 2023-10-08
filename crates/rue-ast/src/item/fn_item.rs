@@ -1,4 +1,5 @@
-use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use rowan::ast::AstNode;
+use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxToken};
 
 mod fn_param;
 mod fn_param_list;
@@ -6,16 +7,11 @@ mod fn_param_list;
 pub use fn_param::*;
 pub use fn_param_list::*;
 
-use crate::{Block, Type};
+use crate::{ast_node, Block};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnItem(pub SyntaxNode);
+ast_node!(FnItem);
 
 impl FnItem {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::FnItem).then(|| Self(node))
-    }
-
     pub fn name(&self) -> Option<SyntaxToken> {
         self.0
             .children_with_tokens()
@@ -27,8 +23,12 @@ impl FnItem {
         self.0.children().find_map(FnParamList::cast)
     }
 
-    pub fn return_type(&self) -> Option<Type> {
-        self.0.children_with_tokens().filter_map(Type::cast).nth(1)
+    pub fn return_type(&self) -> Option<SyntaxToken> {
+        self.0
+            .children_with_tokens()
+            .filter_map(SyntaxElement::into_token)
+            .filter(|token| token.kind() == SyntaxKind::Ident)
+            .nth(1)
     }
 
     pub fn block(&self) -> Option<Block> {

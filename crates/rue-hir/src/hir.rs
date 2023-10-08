@@ -1,4 +1,5 @@
 use num_bigint::BigInt;
+use rue_ast::BinaryOp;
 
 use crate::SymbolId;
 
@@ -8,7 +9,7 @@ pub enum Hir {
     String(String),
     Symbol(SymbolId),
     BinOp {
-        op: BinOp,
+        op: BinaryOp,
         lhs: Box<Hir>,
         rhs: Box<Hir>,
     },
@@ -21,14 +22,4 @@ pub enum Hir {
         then_branch: Box<Hir>,
         else_branch: Box<Hir>,
     },
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum BinOp {
-    Add,
-    Sub,
-    Mul,
-    Div,
-    Lt,
-    Gt,
 }

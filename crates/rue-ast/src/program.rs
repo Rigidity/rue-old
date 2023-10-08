@@ -1,15 +1,10 @@
-use rue_syntax::{SyntaxKind, SyntaxNode};
+use rowan::ast::AstNode;
 
-use crate::Item;
+use crate::{ast_node, Item};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Program(pub SyntaxNode);
+ast_node!(Program);
 
 impl Program {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::Program).then(|| Self(node))
-    }
-
     pub fn items(&self) -> Vec<Item> {
         self.0.children().filter_map(Item::cast).collect()
     }

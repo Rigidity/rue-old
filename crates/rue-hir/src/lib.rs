@@ -1,7 +1,8 @@
 use itertools::Itertools;
-use rue_ast::{BinaryExpr, Block, CallExpr, Expr, FnItem, IfExpr, Item, Program};
+use rowan::ast::AstNode;
+use rue_ast::{BinaryExpr, Block, CallExpr, Expr, FnItem, IfExpr, Item, LiteralExpr, Program};
 use rue_error::Error;
-use rue_syntax::SyntaxToken;
+use rue_syntax::{SyntaxKind, SyntaxToken};
 
 mod database;
 mod hir;
@@ -13,8 +14,9 @@ pub use database::*;
 pub use hir::*;
 pub use scope::*;
 pub use symbol::*;
-
 use ty::Type;
+
+pub use rue_ast::BinaryOp;
 
 pub struct Output {
     pub errors: Vec<Error>,
@@ -115,7 +117,7 @@ impl Lowerer {
                 }
 
                 if let Some(error) = error {
-                    self.errors.push(Error::new(error, item.0.text_range().into()));
+                    self.errors.push(Error::new(error, item.syntax().text_range().into()));
                     None
                 } else {
                     Some(())
@@ -130,13 +132,21 @@ impl Lowerer {
 
     fn lower_expr(&mut self, expr: Expr) -> Option<(Type, Hir)> {
         match expr {
-            Expr::Integer(token) => self.lower_integer_expr(token),
-            Expr::String(token) => self.lower_string_expr(token),
-            Expr::Ident(token) => self.lower_ident_expr(token),
+            Expr::Literal(expr) => self.lower_literal_expr(expr),
             Expr::Binary(expr) => self.lower_binary_expr(expr),
             Expr::Prefix(_expr) => todo!(),
             Expr::Call(expr) => self.lower_call_expr(expr),
             Expr::If(expr) => self.lower_if_expr(expr),
+        }
+    }
+
+    fn lower_literal_expr(&mut self, expr: LiteralExpr) -> Option<(Type, Hir)> {
+        let token = expr.token()?;
+        match token.kind() {
+            SyntaxKind::Integer => self.lower_integer_expr(token),
+            SyntaxKind::String => self.lower_string_expr(token),
+            SyntaxKind::Ident => self.lower_ident_expr(token),
+            _ => None,
         }
     }
 
@@ -196,8 +206,7 @@ impl Lowerer {
     }
 
     fn lower_binary_expr(&mut self, expr: BinaryExpr) -> Option<(Type, Hir)> {
-        let op = expr.op()?;
-        let op_name = op.text();
+        let (op, token) = expr.op()?;
 
         let lhs = self.lower_expr(expr.lhs()?)?;
         let rhs = self.lower_expr(expr.rhs()?)?;
@@ -205,23 +214,13 @@ impl Lowerer {
         if lhs.0 != Type::Int || rhs.0 != Type::Int {
             self.errors.push(Error::new(
                 format!(
-                    "cannot apply operator `{op_name}` to values of type `{}` and `{}`",
+                    "cannot apply operator `{op}` to values of type `{}` and `{}`",
                     lhs.0, rhs.0
                 ),
-                op.text_range().into(),
+                token.text_range().into(),
             ));
             return None;
         }
-
-        let op = match op_name {
-            "+" => BinOp::Add,
-            "-" => BinOp::Sub,
-            "*" => BinOp::Mul,
-            "/" => BinOp::Div,
-            "<" => BinOp::Lt,
-            ">" => BinOp::Gt,
-            _ => todo!(),
-        };
 
         let hir = Hir::BinOp {
             op,
@@ -251,7 +250,7 @@ impl Lowerer {
                     "expected callable function, found value of type `{}`",
                     target.0
                 ),
-                expr.0.text_range().into(),
+                expr.syntax().text_range().into(),
             ));
             return None;
         };
@@ -263,7 +262,7 @@ impl Lowerer {
                     param_types.len(),
                     args.len()
                 ),
-                expr.0.text_range().into(),
+                expr.syntax().text_range().into(),
             ));
             return None;
         }
@@ -276,7 +275,7 @@ impl Lowerer {
             if !arg.0.is_assignable_to(ty) {
                 self.errors.push(Error::new(
                     format!("expected argument of type `{}`, but found `{}`", ty, arg.0),
-                    expr.0.text_range().into(),
+                    expr.syntax().text_range().into(),
                 ));
                 return None;
             }
@@ -304,7 +303,7 @@ impl Lowerer {
                     "then branch has type `{}`, but else branch has differing type `{}`",
                     then_block.0, else_block.0
                 ),
-                expr.0.text_range().into(),
+                expr.syntax().text_range().into(),
             ));
             return None;
         }
@@ -319,13 +318,7 @@ impl Lowerer {
         ))
     }
 
-    fn lower_type(&mut self, ty: rue_ast::Type) -> Option<Type> {
-        match ty {
-            rue_ast::Type::Named(token) => self.lower_named_type(token),
-        }
-    }
-
-    fn lower_named_type(&mut self, token: SyntaxToken) -> Option<Type> {
+    fn lower_type(&mut self, token: SyntaxToken) -> Option<Type> {
         match self.resolve_type(token.text()) {
             Some(ty) => Some(ty.clone()),
             None => {

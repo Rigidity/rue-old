@@ -1,15 +1,10 @@
-use rue_syntax::{SyntaxKind, SyntaxNode};
+use rowan::ast::AstNode;
 
-use crate::FnParam;
+use crate::{ast_node, FnParam};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct FnParamList(pub SyntaxNode);
+ast_node!(FnParamList);
 
 impl FnParamList {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::FnParamList).then(|| Self(node))
-    }
-
     pub fn params(&self) -> Vec<FnParam> {
         self.0.children().filter_map(FnParam::cast).collect()
     }

@@ -1042,6 +1042,7 @@ dependencies = [
 name = "rue-ast"
 version = "0.1.0"
 dependencies = [
+ "rowan",
  "rue-syntax",
 ]
 
@@ -1070,6 +1071,7 @@ dependencies = [
  "itertools",
  "la-arena",
  "num-bigint",
+ "rowan",
  "rue-ast",
  "rue-error",
  "rue-syntax",

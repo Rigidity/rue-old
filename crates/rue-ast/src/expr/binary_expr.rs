@@ -1,27 +1,59 @@
-use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken, T};
+use std::fmt;
 
-use crate::Expr;
+use rowan::ast::AstNode;
+use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxToken, T};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct BinaryExpr(pub SyntaxNode);
+use crate::{ast_node, Expr};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BinaryOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Lt,
+    Gt,
+}
+
+impl fmt::Display for BinaryOp {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Add => write!(f, "+"),
+            Self::Sub => write!(f, "-"),
+            Self::Mul => write!(f, "*"),
+            Self::Div => write!(f, "/"),
+            Self::Lt => write!(f, "<"),
+            Self::Gt => write!(f, ">"),
+        }
+    }
+}
+
+ast_node!(BinaryExpr);
 
 impl BinaryExpr {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        (node.kind() == SyntaxKind::BinaryExpr).then(|| Self(node))
-    }
-
     pub fn lhs(&self) -> Option<Expr> {
-        self.0.children_with_tokens().find_map(Expr::cast)
+        self.0.children().find_map(Expr::cast)
     }
 
-    pub fn op(&self) -> Option<SyntaxToken> {
+    pub fn op(&self) -> Option<(BinaryOp, SyntaxToken)> {
         self.0
             .children_with_tokens()
             .filter_map(SyntaxElement::into_token)
-            .find(|token| matches!(token.kind(), T![+] | T![-] | T![*] | T![/] | T![<] | T![>]))
+            .find_map(|token| {
+                let op = match token.kind() {
+                    T![+] => BinaryOp::Add,
+                    T![-] => BinaryOp::Sub,
+                    T![*] => BinaryOp::Mul,
+                    T![/] => BinaryOp::Div,
+                    T![<] => BinaryOp::Lt,
+                    T![>] => BinaryOp::Gt,
+                    _ => return None,
+                };
+                Some((op, token))
+            })
     }
 
     pub fn rhs(&self) -> Option<Expr> {
-        self.0.children_with_tokens().filter_map(Expr::cast).nth(1)
+        self.0.children().filter_map(Expr::cast).nth(1)
     }
 }

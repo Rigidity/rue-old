@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use indexmap::IndexMap;
 use itertools::Itertools;
 use num_bigint::BigInt;
-use rue_hir::{BinOp, Database, Hir, Scope, Symbol, SymbolId};
+use rue_hir::{BinaryOp, Database, Hir, Scope, Symbol, SymbolId};
 
 mod lir;
 
@@ -117,16 +117,16 @@ impl Lowerer {
         self.symbol_table().get(&symbol_id).unwrap().clone()
     }
 
-    fn lower_bin_op(&mut self, op: BinOp, lhs: &Hir, rhs: &Hir) -> Lir {
+    fn lower_bin_op(&mut self, op: BinaryOp, lhs: &Hir, rhs: &Hir) -> Lir {
         let lhs = self.lower_hir(lhs);
         let rhs = self.lower_hir(rhs);
         match op {
-            BinOp::Add => Lir::Add(vec![lhs, rhs]),
-            BinOp::Sub => Lir::Sub(vec![lhs, rhs]),
-            BinOp::Mul => Lir::Mul(vec![lhs, rhs]),
-            BinOp::Div => Lir::Div(vec![lhs, rhs]),
-            BinOp::Lt => Lir::Lt(Box::new(lhs), Box::new(rhs)),
-            BinOp::Gt => Lir::Gt(Box::new(lhs), Box::new(rhs)),
+            BinaryOp::Add => Lir::Add(vec![lhs, rhs]),
+            BinaryOp::Sub => Lir::Sub(vec![lhs, rhs]),
+            BinaryOp::Mul => Lir::Mul(vec![lhs, rhs]),
+            BinaryOp::Div => Lir::Div(vec![lhs, rhs]),
+            BinaryOp::Lt => Lir::Lt(Box::new(lhs), Box::new(rhs)),
+            BinaryOp::Gt => Lir::Gt(Box::new(lhs), Box::new(rhs)),
         }
     }
 

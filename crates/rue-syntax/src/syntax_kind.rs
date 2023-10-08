@@ -47,6 +47,7 @@ pub enum SyntaxKind {
 
     Arrow,
 
+    LiteralExpr,
     PrefixExpr,
     BinaryExpr,
     CallExpr,
@@ -114,6 +115,7 @@ impl fmt::Display for SyntaxKind {
 
             Self::Arrow => write!(f, "`->`"),
 
+            Self::LiteralExpr => write!(f, "literal expression"),
             Self::PrefixExpr => write!(f, "prefix expression"),
             Self::BinaryExpr => write!(f, "binary expression"),
             Self::CallExpr => write!(f, "call expression"),

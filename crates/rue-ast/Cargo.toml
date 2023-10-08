@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+rowan = "0.15.13"
 rue-syntax = { version = "0.1.0", path = "../rue-syntax" }
