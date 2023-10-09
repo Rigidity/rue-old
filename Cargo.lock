@@ -1025,10 +1025,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
- "clvmr",
  "hex",
- "num-derive",
- "num-traits",
  "rowan",
  "rue-ast",
  "rue-compiler",
