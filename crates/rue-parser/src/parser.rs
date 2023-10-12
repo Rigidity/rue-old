@@ -7,7 +7,8 @@ use rue_error::Error;
 use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind, SyntaxNode, T};
 
-const RECOVERY_SET: [SyntaxKind; 4] = [T!['}'], T![;], T![fn], T![let]];
+#[allow(unused)]
+const RECOVERY_SET: [SyntaxKind; 5] = [T!['{'], T!['}'], T![;], T![fn], T![let]];
 
 pub(crate) struct Parser<'a> {
     tokens: Vec<(SyntaxKind, &'a str)>,
@@ -73,38 +74,48 @@ impl<'a> Parser<'a> {
         if let Some(num_tokens) = self.peek_tokens_of(kind) {
             self.add_tokens(kind, num_tokens);
         } else {
-            self.error();
+            self.unexpected_token_error();
         }
     }
 
-    pub(crate) fn error(&mut self) {
+    pub(crate) fn error(&mut self, message: String) {
         self.eat_trivia();
 
         let eof = (SyntaxKind::Eof, self.text_pos..self.text_pos);
-        let (kind, range) = self.tokens.get(self.pos).map_or(eof, |token| {
+        let (_, range) = self.tokens.get(self.pos).map_or(eof, |token| {
             let next_text_pos = self.text_pos + token.1.len();
             let range = self.text_pos..next_text_pos;
             (token.0, range)
         });
 
-        let expected = mem::take(&mut self.expected_kinds)
-            .into_iter()
-            .map(|kind| format!("`{kind}`"))
-            .join(", ");
-
-        self.errors.push(Error::new(
-            format!("found {kind}, expected one of: {expected}"),
-            range.into(),
-        ));
-
-        if !self.at_set(&RECOVERY_SET) && !self.at_eof() {
-            self.start(SyntaxKind::Error);
-            self.bump();
-            self.finish();
-        }
+        self.errors.push(Error::new(message, range.into()));
+        self.add_error_token();
     }
 
-    fn peek(&mut self) -> SyntaxKind {
+    pub(crate) fn expected(&mut self) -> String {
+        mem::take(&mut self.expected_kinds)
+            .into_iter()
+            .map(|kind| format!("`{kind}`"))
+            .join(", ")
+    }
+
+    pub(crate) fn unexpected_token_error(&mut self) {
+        let found = self.peek();
+        let expected = self.expected();
+        self.error(format!("found {found}, expected one of: {expected}",));
+
+        // if !self.at_set(&RECOVERY_SET) && !self.at_eof() {
+        //     self.add_error_token();
+        // }
+    }
+
+    fn add_error_token(&mut self) {
+        self.start(SyntaxKind::Error);
+        self.bump();
+        self.finish();
+    }
+
+    pub fn peek(&mut self) -> SyntaxKind {
         self.eat_trivia();
         self.nth(0)
     }

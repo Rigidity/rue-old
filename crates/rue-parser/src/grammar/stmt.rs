@@ -10,7 +10,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
     if p.at(T![let]) {
         parse_let_stmt(p);
     } else {
-        p.error();
+        p.error("expected statement".to_string());
     }
 }
 

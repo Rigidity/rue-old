@@ -21,7 +21,7 @@ fn parse_binary_expr(p: &mut Parser, min_binding_power: u8) {
     } else if p.at(T!['(']) {
         parse_group_expr(p);
     } else {
-        return p.error();
+        return p.error("expected expression".to_string());
     }
 
     if p.at(T!['(']) {

@@ -6,6 +6,6 @@ pub(super) fn parse_type(p: &mut Parser) {
     if p.at(SyntaxKind::Ident) {
         p.bump();
     } else {
-        p.error();
+        p.error("expected type".to_string());
     }
 }

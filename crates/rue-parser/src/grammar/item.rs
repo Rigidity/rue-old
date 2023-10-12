@@ -8,7 +8,7 @@ pub(super) fn parse_item(p: &mut Parser) {
     if p.at(T![fn]) {
         parse_fn_item(p);
     } else {
-        p.error();
+        p.error("expected item".to_string());
     }
 }
 

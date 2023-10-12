@@ -1,0 +1,24 @@
+use std::chia::{PublicKey, Condition};
+
+fn standard_puzzle<T>(
+    synthetic_pk: PublicKey,
+    original_pk: PublicKey,
+    delegated_fn: fn(...T) -> List<Condition>,
+    fn_args: T
+) -> List<Condition> {
+    let conditions = delegated_fn(...fn_args);
+    let delegated_hash = delegated_fn.tree_hash();
+
+    if original_pk != 0 {
+        let added_sk = sha256(original_pk, delegated_hash);
+        let added_pk = added_sk.public_key();
+        assert(synthetic_pk == original_pk + added_pk);
+        return conditions
+    }
+
+    let agg_sig = Condition::AggSigMe {
+        public_key: synthetic_pk,
+        message: delegated_hash
+    };
+    [agg_sig, ...conditions]
+}
