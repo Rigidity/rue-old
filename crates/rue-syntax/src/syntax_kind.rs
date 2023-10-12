@@ -1,70 +1,72 @@
-use std::fmt;
-
 use num_derive::{FromPrimitive, ToPrimitive};
 
-#[derive(
-    Default, Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord, ToPrimitive, FromPrimitive,
-)]
-pub enum SyntaxKind {
-    #[default]
-    Eof,
-    Unknown,
-    Error,
-    Whitespace,
-    LineComment,
-    BlockComment,
+macro_rules! kinds {
+    ( $( $( #[ $attr:meta ] )* $name:ident = $text:literal ),+ $(,)? ) => {
+        #[derive(Default, Debug, Clone, Copy)]
+        #[derive(Hash, PartialEq, Eq, PartialOrd, Ord)]
+        #[derive(ToPrimitive, FromPrimitive)]
+        pub enum SyntaxKind {
+            $( $( #[ $attr ] )* $name, )+
+        }
 
-    Ident,
-    Integer,
-    String,
-
-    Fun,
-    Use,
-    If,
-    Else,
-    Return,
-    Let,
-
-    OpenParen,
-    CloseParen,
-    OpenBracket,
-    CloseBracket,
-    OpenBrace,
-    CloseBrace,
-
-    Plus,
-    Minus,
-    Star,
-    Slash,
-
-    GreaterThan,
-    LessThan,
-    Equals,
-
-    Dot,
-    Comma,
-    Colon,
-    Semicolon,
-
-    Arrow,
-
-    LiteralExpr,
-    PrefixExpr,
-    BinaryExpr,
-    CallExpr,
-    IfExpr,
-
-    LetStmt,
-
-    FunctionItem,
-    FunctionParamList,
-    FunctionParam,
-
-    UseItem,
-
-    Block,
-    Program,
+        impl std::fmt::Display for SyntaxKind {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                match self {
+                    $( Self::$name => write!(f, "{}", $text), )+
+                }
+            }
+        }
+    };
 }
+
+kinds![
+    #[default]
+    Eof = "eof",
+    Unknown = "unknown",
+    Error = "error",
+    Whitespace = "whitespace",
+    LineComment = "line comment",
+    BlockComment = "block comment",
+    Ident = "identifier",
+    Integer = "integer",
+    String = "string",
+    Fun = "`fun`",
+    Use = "`use`",
+    If = "`if`",
+    Else = "`else`",
+    Return = "`return`",
+    Let = "`let`",
+    OpenParen = "`(`",
+    CloseParen = "`)`",
+    OpenBracket = "`[`",
+    CloseBracket = "`]`",
+    OpenBrace = "`{`",
+    CloseBrace = "`}`",
+    Plus = "`+`",
+    Minus = "`-`",
+    Star = "`*`",
+    Slash = "`/`",
+    GreaterThan = "`>`",
+    LessThan = "`<`",
+    Equals = "`=`",
+    Dot = "`.`",
+    Comma = "`,`",
+    Colon = "`:`",
+    Semicolon = "`;`",
+    Arrow = "`=>`",
+    LiteralExpr = "literal expression",
+    PrefixExpr = "prefix expression",
+    BinaryExpr = "binary expression",
+    CallExpr = "call expression",
+    IfExpr = "`if` expression",
+    LetStmt = "`let` statement",
+    FunctionItem = "`fun` item",
+    FunctionParamList = "parameter list",
+    FunctionParam = "parameter",
+    UseItem = "`use` item",
+    Block = "block",
+    Program = "program"
+];
 
 impl SyntaxKind {
     pub fn is_trivia(self) -> bool {
@@ -72,70 +74,6 @@ impl SyntaxKind {
             self,
             Self::Whitespace | Self::LineComment | Self::BlockComment
         )
-    }
-}
-
-impl fmt::Display for SyntaxKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Eof => write!(f, "eof"),
-            Self::Unknown => write!(f, "unknown"),
-            Self::Error => write!(f, "error"),
-            Self::Whitespace => write!(f, "whitespace"),
-            Self::LineComment => write!(f, "line comment"),
-            Self::BlockComment => write!(f, "block comment"),
-
-            Self::Ident => write!(f, "identifier"),
-            Self::Integer => write!(f, "integer"),
-            Self::String => write!(f, "string"),
-
-            Self::Fun => write!(f, "`fun`"),
-            Self::Use => write!(f, "`use`"),
-            Self::If => write!(f, "`if`"),
-            Self::Else => write!(f, "`else`"),
-            Self::Return => write!(f, "`return`"),
-            Self::Let => write!(f, "`let`"),
-
-            Self::OpenParen => write!(f, "`(`"),
-            Self::CloseParen => write!(f, "`)`"),
-            Self::OpenBracket => write!(f, "`[`"),
-            Self::CloseBracket => write!(f, "`]`"),
-            Self::OpenBrace => write!(f, "`{{`"),
-            Self::CloseBrace => write!(f, "`}}`"),
-
-            Self::Plus => write!(f, "`+`"),
-            Self::Minus => write!(f, "`-`"),
-            Self::Star => write!(f, "`*`"),
-            Self::Slash => write!(f, "`/`"),
-
-            Self::GreaterThan => write!(f, "`>`"),
-            Self::LessThan => write!(f, "`<`"),
-            Self::Equals => write!(f, "`=`"),
-
-            Self::Dot => write!(f, "`.`"),
-            Self::Comma => write!(f, "`,`"),
-            Self::Colon => write!(f, "`:`"),
-            Self::Semicolon => write!(f, "`;`"),
-
-            Self::Arrow => write!(f, "`->`"),
-
-            Self::LiteralExpr => write!(f, "literal expression"),
-            Self::PrefixExpr => write!(f, "prefix expression"),
-            Self::BinaryExpr => write!(f, "binary expression"),
-            Self::CallExpr => write!(f, "call expression"),
-            Self::IfExpr => write!(f, "`if` expression"),
-
-            Self::LetStmt => write!(f, "`let` statement"),
-
-            Self::FunctionItem => write!(f, "function item"),
-            Self::FunctionParamList => write!(f, "parameter list"),
-            Self::FunctionParam => write!(f, "parameter"),
-
-            Self::UseItem => write!(f, "use item"),
-
-            Self::Program => write!(f, "program"),
-            Self::Block => write!(f, "block"),
-        }
     }
 }
 
