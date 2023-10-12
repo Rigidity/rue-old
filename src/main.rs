@@ -1,3 +1,5 @@
+use rowan::ast::AstNode;
+use rue_ast::Program;
 use rue_parser::parse_text;
 
 fn main() {
@@ -8,6 +10,7 @@ fn main() {
     let (errors, output) = parse_text(source);
     all_errors.extend(errors);
 
+    let ast = Program::cast(output);
+
     println!("{:?}", all_errors);
-    println!("{:#?}", output);
 }

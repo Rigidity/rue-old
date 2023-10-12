@@ -8,3 +8,5 @@ edition = "2021"
 
 [dependencies]
 rue-parser = { path = "./crates/rue-parser" }
+rue-ast = { path = "./crates/rue-ast" }
+rowan = "0.15.13"

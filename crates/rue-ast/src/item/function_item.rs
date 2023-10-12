@@ -7,7 +7,7 @@ mod function_param_list;
 pub use function_param::*;
 pub use function_param_list::*;
 
-use crate::{ast_node, Block};
+use crate::{ast_node, Block, Type};
 
 ast_node!(FunctionItem);
 
@@ -27,12 +27,8 @@ impl FunctionItem {
             .unwrap_or_default()
     }
 
-    pub fn return_type(&self) -> Option<SyntaxToken> {
-        self.0
-            .children_with_tokens()
-            .filter_map(SyntaxElement::into_token)
-            .filter(|token| token.kind() == SyntaxKind::Ident)
-            .nth(1)
+    pub fn return_type(&self) -> Option<Type> {
+        self.0.children().find_map(Type::cast)
     }
 
     pub fn block(&self) -> Option<Block> {

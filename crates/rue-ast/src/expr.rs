@@ -10,7 +10,7 @@ pub use if_expr::*;
 pub use literal_expr::*;
 pub use prefix_expr::*;
 
-use crate::ast_enum;
+use crate::{ast_enum, Path};
 
 ast_enum! { Expr,
     Literal(LiteralExpr),
@@ -18,4 +18,5 @@ ast_enum! { Expr,
     Prefix(PrefixExpr),
     Call(CallExpr),
     If(IfExpr),
+    Path(Path)
 }
