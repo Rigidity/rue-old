@@ -523,6 +523,9 @@ dependencies = [
 [[package]]
 name = "rue"
 version = "0.1.0"
+dependencies = [
+ "rue-parser",
+]
 
 [[package]]
 name = "rue-ast"

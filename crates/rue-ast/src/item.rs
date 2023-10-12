@@ -1,9 +1,12 @@
-mod fn_item;
+mod function_item;
+mod use_item;
 
-pub use fn_item::*;
+pub use function_item::*;
+pub use use_item::*;
 
 use crate::ast_enum;
 
 ast_enum! { Item,
-    Fn(FnItem),
+    Function(FunctionItem),
+    Use(UseItem)
 }

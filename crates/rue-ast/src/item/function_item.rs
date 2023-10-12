@@ -1,17 +1,17 @@
 use rowan::ast::AstNode;
 use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxToken};
 
-mod fn_param;
-mod fn_param_list;
+mod function_param;
+mod function_param_list;
 
-pub use fn_param::*;
-pub use fn_param_list::*;
+pub use function_param::*;
+pub use function_param_list::*;
 
 use crate::{ast_node, Block};
 
-ast_node!(FnItem);
+ast_node!(FunctionItem);
 
-impl FnItem {
+impl FunctionItem {
     pub fn name(&self) -> Option<SyntaxToken> {
         self.0
             .children_with_tokens()
@@ -19,8 +19,12 @@ impl FnItem {
             .find(|token| token.kind() == SyntaxKind::Ident)
     }
 
-    pub fn param_list(&self) -> Option<FnParamList> {
-        self.0.children().find_map(FnParamList::cast)
+    pub fn params(&self) -> Vec<FunctionParam> {
+        self.0
+            .children()
+            .find_map(FunctionParamList::cast)
+            .map(|list| list.params())
+            .unwrap_or_default()
     }
 
     pub fn return_type(&self) -> Option<SyntaxToken> {

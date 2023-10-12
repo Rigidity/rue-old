@@ -8,7 +8,7 @@ use rue_lexer::Token;
 use rue_syntax::{RueLang, SyntaxKind, SyntaxNode, T};
 
 #[allow(unused)]
-const RECOVERY_SET: [SyntaxKind; 5] = [T!['{'], T!['}'], T![;], T![fn], T![let]];
+const RECOVERY_SET: [SyntaxKind; 6] = [T!['{'], T!['}'], T![;], T![fun], T![use], T![let]];
 
 pub(crate) struct Parser<'a> {
     tokens: Vec<(SyntaxKind, &'a str)>,
@@ -213,7 +213,8 @@ fn convert_token<'a>(
             SyntaxKind::String
         }
 
-        T::Fn => T![fn],
+        T::Fun => T![fun],
+        T::Use => T![use],
         T::If => T![if],
         T::Else => T![else],
         T::Let => T![let],

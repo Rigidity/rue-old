@@ -9,7 +9,8 @@ pub enum TokenKind {
     Integer,
     String { is_terminated: bool },
 
-    Fn,
+    Fun,
+    Use,
     If,
     Else,
     Let,

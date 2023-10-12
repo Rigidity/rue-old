@@ -100,7 +100,8 @@ impl<'a> Lexer<'a> {
         }
 
         match ident.as_str() {
-            "fn" => TokenKind::Fn,
+            "fun" => TokenKind::Fun,
+            "use" => TokenKind::Use,
             "if" => TokenKind::If,
             "else" => TokenKind::Else,
             "let" => TokenKind::Let,
@@ -193,7 +194,8 @@ mod tests {
         check("SomethingImportant", &[TokenKind::Ident]);
         check("A", &[TokenKind::Ident]);
         check("_0", &[TokenKind::Ident]);
-        check("fn", &[TokenKind::Fn]);
+        check("fun", &[TokenKind::Fun]);
+        check("use", &[TokenKind::Use]);
         check("if", &[TokenKind::If]);
         check("else", &[TokenKind::Else]);
         check("let", &[TokenKind::Let]);

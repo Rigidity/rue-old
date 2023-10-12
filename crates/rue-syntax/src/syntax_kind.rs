@@ -18,7 +18,8 @@ pub enum SyntaxKind {
     Integer,
     String,
 
-    Fn,
+    Fun,
+    Use,
     If,
     Else,
     Return,
@@ -55,9 +56,11 @@ pub enum SyntaxKind {
 
     LetStmt,
 
-    FnItem,
-    FnParamList,
-    FnParam,
+    FunctionItem,
+    FunctionParamList,
+    FunctionParam,
+
+    UseItem,
 
     Block,
     Program,
@@ -86,7 +89,8 @@ impl fmt::Display for SyntaxKind {
             Self::Integer => write!(f, "integer"),
             Self::String => write!(f, "string"),
 
-            Self::Fn => write!(f, "`fn`"),
+            Self::Fun => write!(f, "`fun`"),
+            Self::Use => write!(f, "`use`"),
             Self::If => write!(f, "`if`"),
             Self::Else => write!(f, "`else`"),
             Self::Return => write!(f, "`return`"),
@@ -123,9 +127,11 @@ impl fmt::Display for SyntaxKind {
 
             Self::LetStmt => write!(f, "`let` statement"),
 
-            Self::FnItem => write!(f, "`fn` item"),
-            Self::FnParamList => write!(f, "parameter list"),
-            Self::FnParam => write!(f, "parameter"),
+            Self::FunctionItem => write!(f, "function item"),
+            Self::FunctionParamList => write!(f, "parameter list"),
+            Self::FunctionParam => write!(f, "parameter"),
+
+            Self::UseItem => write!(f, "use item"),
 
             Self::Program => write!(f, "program"),
             Self::Block => write!(f, "block"),
@@ -135,7 +141,8 @@ impl fmt::Display for SyntaxKind {
 
 #[macro_export]
 macro_rules! T {
-    [fn] => { SyntaxKind::Fn };
+    [fun] => { SyntaxKind::Fun };
+    [use] => { SyntaxKind::Use };
     [if] => { SyntaxKind::If };
     [else] => { SyntaxKind::Else };
     [return] => { SyntaxKind::Return };

@@ -2,9 +2,9 @@ use rue_syntax::{SyntaxElement, SyntaxKind, SyntaxToken};
 
 use crate::ast_node;
 
-ast_node!(FnParam);
+ast_node!(FunctionParam);
 
-impl FnParam {
+impl FunctionParam {
     pub fn name(&self) -> Option<SyntaxToken> {
         self.0
             .children_with_tokens()
