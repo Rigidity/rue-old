@@ -49,7 +49,7 @@ impl<'a> Parser<'a> {
 
     pub(crate) fn at(&mut self, kind: SyntaxKind) -> bool {
         self.expected_kinds.insert(kind);
-        self.peek() == kind
+        self.peek_tokens_of(kind).is_some()
     }
 
     pub(crate) fn at_set(&mut self, set: &[SyntaxKind]) -> bool {
@@ -69,7 +69,6 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn expect(&mut self, kind: SyntaxKind) {
-        self.expected_kinds.clear();
         self.eat_trivia();
         if let Some(num_tokens) = self.peek_tokens_of(kind) {
             self.add_tokens(kind, num_tokens);
@@ -93,10 +92,7 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn expected(&mut self) -> String {
-        mem::take(&mut self.expected_kinds)
-            .into_iter()
-            .map(|kind| format!("`{kind}`"))
-            .join(", ")
+        mem::take(&mut self.expected_kinds).into_iter().join(", ")
     }
 
     pub(crate) fn unexpected_token_error(&mut self) {
@@ -134,6 +130,7 @@ impl<'a> Parser<'a> {
     fn peek_tokens_of(&mut self, kind: SyntaxKind) -> Option<usize> {
         match kind {
             T![->] if self.nth_at(0, T![-]) && self.nth_at(1, T![>]) => Some(2),
+            T![::] if self.nth_at(0, T![:]) && self.nth_at(1, T![:]) => Some(2),
             _ if self.peek() == kind => Some(1),
             _ => None,
         }

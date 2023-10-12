@@ -2,9 +2,11 @@ use rue_syntax::SyntaxKind;
 
 use crate::parser::Parser;
 
-pub(super) fn parse_type(p: &mut Parser) {
+use super::path::path;
+
+pub(super) fn ty(p: &mut Parser) {
     if p.at(SyntaxKind::Ident) {
-        p.bump();
+        path(p);
     } else {
         p.error("expected type".to_string());
     }

@@ -1,4 +1,4 @@
-use;
+use std::clvm;
 
 fun main() -> int {
     clvm::add(3, 2)

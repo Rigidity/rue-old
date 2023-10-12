@@ -2,42 +2,43 @@ use rue_syntax::{SyntaxKind, T};
 
 use crate::parser::Parser;
 
-use super::{parse_block, ty::parse_type};
+use super::{block, path::path, ty::ty};
 
-pub(super) fn parse_item(p: &mut Parser) {
+pub(super) fn item(p: &mut Parser) {
     if p.at(T![fun]) {
-        parse_fun_item(p);
+        fun_item(p);
     } else if p.at(T![use]) {
-        parse_use_item(p);
+        use_item(p);
     } else {
         p.error("expected item".to_string());
     }
 }
 
-fn parse_fun_item(p: &mut Parser) {
+fn fun_item(p: &mut Parser) {
     p.start(SyntaxKind::FunctionItem);
     p.expect(T![fun]);
     p.expect(SyntaxKind::Ident);
-    parse_fun_param_list(p);
+    param_list(p);
     p.expect(T![->]);
-    parse_type(p);
-    parse_block(p);
+    ty(p);
+    block(p);
     p.finish();
 }
 
-fn parse_use_item(p: &mut Parser) {
+fn use_item(p: &mut Parser) {
     p.start(SyntaxKind::UseItem);
     p.expect(T![use]);
+    path(p);
     p.expect(T![;]);
     p.finish();
 }
 
-fn parse_fun_param_list(p: &mut Parser) {
+fn param_list(p: &mut Parser) {
     p.start(SyntaxKind::FunctionParamList);
     p.expect(T!['(']);
 
     while !p.at_set(&[T![')'], SyntaxKind::Eof]) {
-        parse_fn_param(p);
+        param(p);
 
         if p.at(T![,]) {
             p.bump();
@@ -50,10 +51,10 @@ fn parse_fun_param_list(p: &mut Parser) {
     p.finish();
 }
 
-fn parse_fn_param(p: &mut Parser) {
+fn param(p: &mut Parser) {
     p.start(SyntaxKind::FunctionParam);
     p.expect(SyntaxKind::Ident);
     p.expect(T![:]);
-    parse_type(p);
+    ty(p);
     p.finish();
 }

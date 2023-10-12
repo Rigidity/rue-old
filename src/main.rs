@@ -9,5 +9,5 @@ fn main() {
     all_errors.extend(errors);
 
     println!("{:?}", all_errors);
-    println!("{:?}", output);
+    println!("{:#?}", output);
 }

@@ -54,6 +54,8 @@ kinds![
     Colon = "`:`",
     Semicolon = "`;`",
     Arrow = "`=>`",
+    PathSeperator = "`::`",
+    Path = "path",
     LiteralExpr = "literal expression",
     PrefixExpr = "prefix expression",
     BinaryExpr = "binary expression",
@@ -103,4 +105,5 @@ macro_rules! T {
     [:] => { SyntaxKind::Colon };
     [;] => { SyntaxKind::Semicolon };
     [->] => { SyntaxKind::Arrow };
+    [::] => { SyntaxKind::PathSeperator };
 }

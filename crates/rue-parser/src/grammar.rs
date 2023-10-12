@@ -3,31 +3,32 @@ use rue_syntax::{SyntaxKind, T};
 use crate::parser::Parser;
 
 use self::{
-    expr::parse_expr,
-    item::parse_item,
-    stmt::{parse_stmt, STMT_SET},
+    expr::expr,
+    item::item,
+    stmt::{stmt, STMT_SET},
 };
 
 mod expr;
 mod item;
+mod path;
 mod stmt;
 mod ty;
 
-pub(super) fn parse_program(p: &mut Parser) {
+pub(super) fn program(p: &mut Parser) {
     p.start(SyntaxKind::Program);
     while !p.at_eof() {
-        parse_item(p);
+        item(p);
     }
     p.finish();
 }
 
-fn parse_block(p: &mut Parser) {
+fn block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
     p.expect(T!['{']);
     while p.at_set(&STMT_SET) {
-        parse_stmt(p);
+        stmt(p);
     }
-    parse_expr(p);
+    expr(p);
     p.expect(T!['}']);
     p.finish();
 }
@@ -39,7 +40,7 @@ mod tests {
 
     use crate::Parser;
 
-    use super::parse_program;
+    use super::program;
 
     #[macro_export]
     macro_rules! check {
@@ -57,7 +58,7 @@ mod tests {
         };
     }
 
-    check!(check_program: parser => parse_program(&mut parser));
+    check!(check_program: parser => program(&mut parser));
 
     #[test]
     fn parse_nothing() {
