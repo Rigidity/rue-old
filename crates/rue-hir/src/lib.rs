@@ -202,6 +202,13 @@ impl Lowerer {
                 },
                 hir,
             ),
+            Symbol::Builtin { .. } => {
+                self.errors.push(Error::new(
+                    format!("builtin function `{name}` cannot be used as a value"),
+                    token.text_range().into(),
+                ));
+                return None;
+            }
         })
     }
 

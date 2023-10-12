@@ -43,13 +43,13 @@ fn compile(source: &str) -> Result<Vec<u8>, Vec<Error>> {
     let rue_hir::Output {
         errors: hir_errors,
         db,
-        scope: Some(scope),
-    } = rue_hir::lower(program)
-    else {
+        scope,
+    } = rue_hir::lower(program);
+    errors.extend(hir_errors);
+
+    let Some(scope) = scope else {
         return Err(errors);
     };
-
-    errors.extend(hir_errors);
 
     let Some(lir) = rue_lir::lower(db, scope) else {
         return Err(errors);

@@ -36,6 +36,7 @@ impl Lowerer {
             if self.scope().used_symbols().contains(&symbol_id) {
                 match self.db.symbol(symbol_id) {
                     Symbol::Parameter { .. } => {}
+                    Symbol::Builtin { .. } => {}
                     Symbol::Variable { value, .. } => {
                         environment.push(self.lower_hir(&value.clone()));
                     }
@@ -132,25 +133,34 @@ impl Lowerer {
 
     fn lower_call(&mut self, value: &Hir, arguments: &[Hir]) -> Lir {
         if let Hir::Symbol(symbol_id) = value {
-            if let Symbol::Function {
-                scope: Some(scope), ..
-            } = self.db.symbol(*symbol_id)
-            {
-                let mut environment = Vec::new();
+            match self.db.symbol(*symbol_id) {
+                Symbol::Function {
+                    scope: Some(scope), ..
+                } => {
+                    let mut environment = Vec::new();
 
-                for capture in scope.captured_symbols() {
-                    environment.push(self.lower_symbol(capture));
+                    for capture in scope.captured_symbols() {
+                        environment.push(self.lower_symbol(capture));
+                    }
+
+                    for argument in arguments {
+                        environment.push(self.lower_hir(argument));
+                    }
+
+                    return Lir::Environment {
+                        value: Box::new(self.lower_hir(value)),
+                        arguments: environment,
+                        rest: None,
+                    };
                 }
-
-                for argument in arguments {
-                    environment.push(self.lower_hir(argument));
+                Symbol::Builtin {
+                    param_types,
+                    return_type,
+                    resolver,
+                } => {
+                    todo!()
                 }
-
-                return Lir::Environment {
-                    value: Box::new(self.lower_hir(value)),
-                    arguments: environment,
-                    rest: None,
-                };
+                _ => {}
             }
         }
         Lir::Environment {

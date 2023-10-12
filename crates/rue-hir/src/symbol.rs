@@ -20,4 +20,9 @@ pub enum Symbol {
         resolved_body: Option<Hir>,
         scope: Option<Scope>,
     },
+    Builtin {
+        param_types: Vec<Type>,
+        return_type: Type,
+        resolver: fn(args: Vec<Hir>) -> Hir,
+    },
 }
