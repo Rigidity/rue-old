@@ -7,13 +7,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rowan = "0.15.11"
-hex = "0.4.3"
 anyhow = "1.0.75"
-clap = { version = "4.4.6", features = ["derive"] }
-rue-error = { version = "0.1.0", path = "./crates/rue-error" }
-rue-parser = { version = "0.1.0", path = "./crates/rue-parser" }
-rue-ast = { version = "0.1.0", path = "./crates/rue-ast" }
-rue-hir = { version = "0.1.0", path = "./crates/rue-hir" }
-rue-lir = { version = "0.1.0", path = "./crates/rue-lir" }
-rue-compiler = { version = "0.1.0", path = "./crates/rue-compiler" }
