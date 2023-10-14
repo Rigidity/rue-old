@@ -24,7 +24,7 @@ impl<'a> Parser<'a> {
         let mut errors = Vec::new();
         let mut pos = 0;
         let tokens = input
-            .into_iter()
+            .iter()
             .map(|token| {
                 let result = convert_token(token, pos, &mut errors);
                 pos += token.text.len();
@@ -196,7 +196,7 @@ fn convert_token<'a>(
         T::LineComment => SyntaxKind::LineComment,
         T::BlockComment { is_terminated } => {
             if !is_terminated {
-                error(format!("unterminated block comment"));
+                error("unterminated block comment".to_string());
             }
             SyntaxKind::BlockComment
         }
@@ -205,7 +205,7 @@ fn convert_token<'a>(
         T::Integer => SyntaxKind::Integer,
         T::String { is_terminated } => {
             if !is_terminated {
-                error(format!("unterminated string literal"));
+                error("unterminated string literal".to_string());
             }
             SyntaxKind::String
         }

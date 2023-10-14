@@ -130,7 +130,7 @@ fn is_whitespace(c: char) -> bool {
 }
 
 fn is_digit(c: char) -> bool {
-    matches!(c, '0'..='9')
+    c.is_ascii_digit()
 }
 
 #[cfg(test)]
