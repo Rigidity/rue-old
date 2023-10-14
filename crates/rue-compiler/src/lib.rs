@@ -11,6 +11,7 @@ mod hir;
 mod lir;
 mod scope;
 mod symbol;
+mod ty;
 
 pub fn compile(program: Program) -> Result<Vec<u8>, Vec<Error>> {
     let end = program.syntax().text_range().end();
@@ -21,9 +22,9 @@ pub fn compile(program: Program) -> Result<Vec<u8>, Vec<Error>> {
         return Err(db.errors());
     };
 
-    let main = scope.resolve("main").map(|main| db.symbol(main));
+    let main = scope.resolve_symbol("main").map(|main| db.symbol(main));
 
-    let Some(Symbol::Function { body, scope }) = main else {
+    let Some(Symbol::Function { body, scope, .. }) = main else {
         db.error(Error::new(
             "missing `main` function".to_string(),
             TextRange::new(end.into(), end.into()),
@@ -31,12 +32,20 @@ pub fn compile(program: Program) -> Result<Vec<u8>, Vec<Error>> {
         return Err(db.errors());
     };
 
-    let lir = lir::Lowerer::new(&db).lower_hir(body.as_ref().unwrap(), scope);
+    let Some(body) = body else {
+        db.error(Error::new(
+            "missing `main` function body".to_string(),
+            TextRange::new(end.into(), end.into()),
+        ));
+        return Err(db.errors());
+    };
+
+    let lir = lir::Lowerer::new(&db).lower_hir(body, scope);
     let bytes = codegen(lir);
 
     Ok(bytes)
 }
 
-fn codegen(lir: Lir) -> Vec<u8> {
+fn codegen(_lir: Lir) -> Vec<u8> {
     Vec::new()
 }
